@@ -19,7 +19,6 @@ namespace Match3
         public MainForm()
         {
             InitializeComponent();
-
             _bufferedGraphics = BufferedGraphicsManager.Current.Allocate(CreateGraphics(), DisplayRectangle);
             _graphics = _bufferedGraphics.Graphics;
 
@@ -39,29 +38,50 @@ namespace Match3
             DrawGrid();
 
             _bufferedGraphics.Render();
-
         }
 
         private void MainForm_MouseClick(object sender, MouseEventArgs e)
         {
-            //Rectangle imageRectangle = new(new(_ImageSize.Width * Program._yellow.AtlasPosition.X, _ImageSize.Height * Program._yellow.AtlasPosition.Y), _ImageSize);
-            //_graphics.DrawImage(_gemsTexture, new Rectangle(new(e.X, e.Y), _cellSize), imageRectangle, GraphicsUnit.Pixel);
+            Point point = e.Location;
+
+            point.X -= _gridOffset.X;
+            point.Y -= _gridOffset.Y;
+
+            if (point.X < 0 || point.Y < 0)
+            {
+                Program.ResetCellSelection();
+            }
+            else
+            {
+                int x = point.X / _cellSize.Width;
+                int y = point.Y / _cellSize.Height;
+                Program.SelectCell(x, y);
+            }
+
+            Invalidate(new Rectangle(0, 0, 1, 1)); // TODO Fix it
         }
 
         private void DrawGrid()
         {
             IReadOnlyMap map = Program.Map;
-            Rectangle rectangle = new(new(0,0), _cellSize);
+            Rectangle rectangle = new(new(0, 0), _cellSize);
             for (int y = 0; y < 8; ++y)
             {
                 for (int x = 0; x < 8; ++x)
                 {
-                    if (map.CellAt(x,y) is not null)
+                    if (map.CellAt(x, y) is not null)
                     {
                         rectangle.Location = new(x * _cellSize.Width + _gridOffset.X, y * _cellSize.Height + _gridOffset.Y);
                         _graphics.DrawImage(_gridImage, rectangle, _ImageRect, GraphicsUnit.Pixel);
                     }
                 }
+            }
+
+            if (Program.SelectedCell is not null)
+            {
+                Point position = Program.SelectedCell.Value;
+                rectangle.Location = new(position.X * _cellSize.Width + _gridOffset.X, position.Y * _cellSize.Height + _gridOffset.Y);
+                _graphics.DrawImage(_gridHighlightedImage, rectangle, _ImageRect, GraphicsUnit.Pixel);
             }
         }
     }
