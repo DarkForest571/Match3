@@ -6,15 +6,26 @@ using System.Threading.Tasks;
 
 namespace Match3
 {
-    public class Cell
+    public interface IReadOnlyCell
     {
-        private float _yPosition;
+        public float YOffset { get; }
+
+        public Gem? Gem { get; }
+    }
+
+    public class Cell : IReadOnlyCell
+    {
+        private float _yOffset;
         private Gem? _gem;
 
         public Cell()
         {
-            _yPosition = 0.0f;
+            _yOffset = 0.0f;
             _gem = null;
         }
+
+        public float YOffset => _yOffset;
+
+        public Gem? Gem => _gem;
     }
 }
