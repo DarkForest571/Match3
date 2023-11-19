@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Match3.Core
+﻿namespace Match3.Core
 {
     public interface IReadOnlyMap
     {
         public Size Size { get; }
 
-        public Cell? CellAt(int x, int y);
+        public IReadOnlyCell? CellAt(int x, int y);
     }
 
     public class Map : IReadOnlyMap
@@ -30,6 +23,6 @@ namespace Match3.Core
 
         public Size Size => _size;
 
-        public Cell? CellAt(int x, int y) => _cellMatrix[x, y];
+        public IReadOnlyCell? CellAt(int x, int y) => _cellMatrix[x, y];
     }
 }

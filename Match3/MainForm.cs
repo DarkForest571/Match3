@@ -3,23 +3,28 @@ namespace Match3
     public partial class MainForm : Form
     {
         private Graphics _graphics;
+        private BufferedGraphics _bufferedGraphics;
+
         private Size _cellSize;
         private Point _gridOffset;
 
-        private Size _ImageSize;
+        private Rectangle _ImageRect;
         private Bitmap _gemsTexture;
         private Bitmap _gridImage;
         private Bitmap _gridHighlightedImage;
+
 
         public MainForm()
         {
             InitializeComponent();
 
-            _graphics = CreateGraphics();
+            _bufferedGraphics = BufferedGraphicsManager.Current.Allocate(CreateGraphics(), DisplayRectangle);
+            _graphics = _bufferedGraphics.Graphics;
+
             _cellSize = new Size(100, 100);
             _gridOffset = new Point(100, 0);
 
-            _ImageSize = new Size(512, 512);
+            _ImageRect = new Rectangle(0, 0, 512, 512);
             _gemsTexture = new Bitmap("..\\..\\..\\..\\img\\sprite_fruit_face_atlas_01.png");
             _gridImage = new Bitmap("..\\..\\..\\..\\img\\ingame_grid.png");
             _gridHighlightedImage = new Bitmap("..\\..\\..\\..\\img\\ingame_grid_highlighted.png");
@@ -27,8 +32,12 @@ namespace Match3
 
         private void MainForm_Paint(object sender, PaintEventArgs e)
         {
-            _graphics.Clear(Color.Pink);
+            _graphics.Clear(Color.MidnightBlue);
+
             DrawGrid();
+
+            _bufferedGraphics.Render();
+
         }
 
         private void MainForm_MouseClick(object sender, MouseEventArgs e)
@@ -39,14 +48,13 @@ namespace Match3
 
         private void DrawGrid()
         {
-            int x = 0;
-            int y = 0;
-            for (int i = 0; i < 8; i++)
+            Rectangle rectangle = new(new(0,0), _cellSize);
+            for (int y = 0; y < 8; y++)
             {
-                for (int j = 0; j < 8; j++)
+                for (int x = 0; x < 8; x++)
                 {
-                    _graphics.DrawImage(_gridImage, i * _cellSize.Width, j * _cellSize.Height, _cellSize.Width, _cellSize.Height);
-
+                    rectangle.Location = new(x * _cellSize.Width + _gridOffset.X, y * _cellSize.Height + _gridOffset.Y);
+                    _graphics.DrawImage(_gridImage, rectangle, _ImageRect, GraphicsUnit.Pixel);
                 }
             }
         }

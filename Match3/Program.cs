@@ -18,7 +18,7 @@ namespace Match3
 
         static Program()
         {
-            _map = new Map();
+            _map = new Map(8, 8);
 
             _red = new Gem(1, new(1, 0));
             _green = new Gem(2, new(2, 0));
