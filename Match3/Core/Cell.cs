@@ -8,6 +8,13 @@ namespace Match3
 {
     public class Cell
     {
-        private float 
+        private float _yPosition;
+        private Gem? _gem;
+
+        public Cell()
+        {
+            _yPosition = 0.0f;
+            _gem = null;
+        }
     }
 }
