@@ -19,6 +19,7 @@ namespace Match3
         static Program()
         {
             _map = new Map(8, 8);
+            _map.Init();
 
             _red = new Gem(1, new(1, 0));
             _green = new Gem(2, new(2, 0));
@@ -28,6 +29,8 @@ namespace Match3
 
             //_freeSpace = new Gem(0, new(0, 2));
         }
+
+        public static IReadOnlyMap Map => _map;
 
         /// <summary>
         ///  The main entry point for the application.

@@ -1,3 +1,5 @@
+using Match3.Core;
+
 namespace Match3
 {
     public partial class MainForm : Form
@@ -48,13 +50,17 @@ namespace Match3
 
         private void DrawGrid()
         {
+            IReadOnlyMap map = Program.Map;
             Rectangle rectangle = new(new(0,0), _cellSize);
-            for (int y = 0; y < 8; y++)
+            for (int y = 0; y < 8; ++y)
             {
-                for (int x = 0; x < 8; x++)
+                for (int x = 0; x < 8; ++x)
                 {
-                    rectangle.Location = new(x * _cellSize.Width + _gridOffset.X, y * _cellSize.Height + _gridOffset.Y);
-                    _graphics.DrawImage(_gridImage, rectangle, _ImageRect, GraphicsUnit.Pixel);
+                    if (map.CellAt(x,y) is not null)
+                    {
+                        rectangle.Location = new(x * _cellSize.Width + _gridOffset.X, y * _cellSize.Height + _gridOffset.Y);
+                        _graphics.DrawImage(_gridImage, rectangle, _ImageRect, GraphicsUnit.Pixel);
+                    }
                 }
             }
         }

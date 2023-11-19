@@ -24,5 +24,16 @@
         public Size Size => _size;
 
         public IReadOnlyCell? CellAt(int x, int y) => _cellMatrix[x, y];
+
+        public virtual void Init()
+        {
+            for (int y = 0; y < _size.Height; ++y)
+            {
+                for (int x = 0; x < _size.Width; ++x)
+                {
+                    _cellMatrix[x, y] = new Cell();
+                }
+            }
+        }
     }
 }
