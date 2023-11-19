@@ -1,4 +1,7 @@
 using Match3.Core;
+using System.Windows.Forms;
+using System;
+using System.Drawing.Imaging;
 
 namespace Match3
 {
@@ -12,8 +15,7 @@ namespace Match3
         private Size _cellSize;
         private Point _gridOffset;
 
-        private Rectangle _ImageRect;
-        private Bitmap _gemsTexture;
+        private List<Bitmap> _gemsTextures;
         private Bitmap _gridImage;
         private Bitmap _gridHighlightedImage;
 
@@ -29,10 +31,27 @@ namespace Match3
             _cellSize = new Size(100, 100);
             _gridOffset = new Point(100, 0);
 
-            _ImageRect = new Rectangle(0, 0, 512, 512);
-            _gemsTexture = new Bitmap("..\\..\\..\\..\\img\\sprite_fruit_face_atlas_01.png");
+            Bitmap gemsTexture = new Bitmap("..\\..\\..\\..\\img\\sprite_fruit_face_atlas_01.png");
+            gemsTexture = new Bitmap(gemsTexture, 400, 400);
+            _gemsTextures = new List<Bitmap>();
+            Point[] positionsOnAtlas = {
+                new (1,0),
+                new (2,0),
+                new (0,1),
+                new (2,1),
+                new (3,2)
+            };
+            for (int i = 0; i < positionsOnAtlas.Length; i++)
+            {
+                Point position = new(_cellSize.Width * positionsOnAtlas[i].X, _cellSize.Height * positionsOnAtlas[i].Y);
+                Rectangle rectangle = new(position, _cellSize);
+                _gemsTextures.Add(gemsTexture.Clone(rectangle, gemsTexture.PixelFormat));
+            }
+
             _gridImage = new Bitmap("..\\..\\..\\..\\img\\ingame_grid.png");
+            _gridImage = new Bitmap(_gridImage, _cellSize);
             _gridHighlightedImage = new Bitmap("..\\..\\..\\..\\img\\ingame_grid_highlighted.png");
+            _gridHighlightedImage = new Bitmap(_gridHighlightedImage, _cellSize);
         }
 
         private void MainForm_Paint(object sender, PaintEventArgs e)
@@ -77,7 +96,7 @@ namespace Match3
                     if (map.CellAt(x, y) is not null)
                     {
                         drawRect.Location = new(x * _cellSize.Width + _gridOffset.X, y * _cellSize.Height + _gridOffset.Y);
-                        _graphics.DrawImage(_gridImage, drawRect, _ImageRect, GraphicsUnit.Pixel);
+                        _graphics.DrawImage(_gridImage, drawRect);
                     }
                 }
             }
@@ -86,7 +105,7 @@ namespace Match3
             {
                 Point position = _game.SelectedCell.Value;
                 drawRect.Location = new(position.X * _cellSize.Width + _gridOffset.X, position.Y * _cellSize.Height + _gridOffset.Y);
-                _graphics.DrawImage(_gridHighlightedImage, drawRect, _ImageRect, GraphicsUnit.Pixel);
+                _graphics.DrawImage(_gridHighlightedImage, drawRect);
             }
         }
 
@@ -94,7 +113,6 @@ namespace Match3
         {
             IReadOnlyMap map = _game.Map;
             Rectangle drawRect = new(new(0, 0), _cellSize);
-            Rectangle atlasRect = new(new(0, 0), _ImageRect.Size);
             for (int y = 0; y < 8; ++y)
             {
                 for (int x = 0; x < 8; ++x)
@@ -104,8 +122,7 @@ namespace Match3
                     {
                         drawRect.Location = new(x * _cellSize.Width + _gridOffset.X,
                             (int)((y + cell.YOffset) * _cellSize.Height) + _gridOffset.Y);
-                        atlasRect.Location = new(cell.Gem.AtlasPosition.X * _ImageRect.Width, cell.Gem.AtlasPosition.Y * _ImageRect.Height);
-                        _graphics.DrawImage(_gemsTexture, drawRect, atlasRect, GraphicsUnit.Pixel);
+                        _graphics.DrawImage(_gemsTextures[cell.Gem.ID], drawRect);
                     }
                 }
             }

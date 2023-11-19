@@ -12,14 +12,15 @@ namespace Match3
         [STAThread]
         static void Main()
         {
-            _game = new();
+            int physicalFrames = 50;
+            _game = new(physicalFrames);
             _game.Init();
 
             ApplicationConfiguration.Initialize();
 
             System.Windows.Forms.Timer timer = new();
             timer.Tick += new EventHandler(Update);
-            timer.Interval = 20;
+            timer.Interval = 1000 / physicalFrames;
             timer.Start();
 
             _mainForm = new MainForm(_game);
@@ -29,7 +30,7 @@ namespace Match3
         private static void Update(object? sender, EventArgs e)
         {
             _game.Update();
-            _mainForm.Invalidate(new Rectangle(0, 0, 1, 1));
+            _mainForm.Invalidate(new Rectangle(0, 0, 1, 1)); // TODO Fix it
         }
     }
 }

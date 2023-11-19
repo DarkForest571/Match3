@@ -11,8 +11,6 @@ namespace Match3.Core
 
     public class Map : IReadOnlyMap
     {
-        private float _gravity;
-
         private int _xSize;
         private int _ySize;
 
@@ -21,9 +19,8 @@ namespace Match3.Core
 
         private List<Gem> _gems;
 
-        public Map(int x, int y, float gravity = 0.01f)
+        public Map(int x, int y)
         {
-            _gravity = gravity;
             _xSize = x;
             _ySize = y;
             _cellMatrix = new Cell[x, y];
@@ -62,13 +59,13 @@ namespace Match3.Core
             _gems = gems;
         }
 
-        public void Update()
+        public void Update(float gravity)
         {
             for (int y = _xSize - 1; y >= 0; --y)
             {
                 for (int x = _xSize - 1; x >= 0; --x)
                 {
-                    _cellMatrix[x, y].Update(_gravity);
+                    _cellMatrix[x, y].Update(gravity);
                 }
             }
             TrySpawnGems();

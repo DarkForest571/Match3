@@ -3,12 +3,10 @@
     public class Gem
     {
         public readonly int ID;
-        public readonly Point AtlasPosition;
 
-        public Gem(int id, Point atlasPosition)
+        public Gem(int id)
         {
             ID = id;
-            AtlasPosition = atlasPosition;
         }
     }
 }
