@@ -52,6 +52,24 @@ namespace Match3.Core
             }
         }
 
+        public virtual void InitGems()
+        {
+            for (int y = 0; y < _ySize; ++y)
+            {
+                for (int x = 0; x < _xSize; ++x)
+                {
+                    int choice;
+                    do
+                    {
+                        choice = Random.Shared.Next(_gems.Count);
+                        _cellMatrix[x, y].SpawnGem(_gems[choice]);
+                    } while (CheckRowAt(x, y));
+                    if (CheckRowAt(x, y))
+                        throw new Exception();
+                }
+            }
+        }
+
         public void SetListOfGems(List<Gem> gems)
         {
             _gems = gems;
@@ -67,6 +85,46 @@ namespace Match3.Core
             return isStatic;
         }
 
+        public bool CheckRowAt(int x, int y)
+        {
+            Gem? gem = _cellMatrix[x, y].Gem;
+            if (gem is null)
+                return false;
+
+            Point[] directionsAndDeltas =
+            {
+                new Point(0, -1),
+                new Point(0, 1),
+                new Point(-1, 0),
+                new Point(1, 0)
+            };
+            Point position = new Point(x, y);
+            Point rowSize = new Point(1, 1);
+
+            foreach (var delta in directionsAndDeltas)
+            {
+                Point observer = position;
+
+                for (int i = 0; i < 2; ++i)
+                {
+                    observer.Offset(delta);
+                    if (observer.X >= 0 && observer.Y >= 0 &&
+                        observer.X < _xSize && observer.Y < _ySize &&
+                        _cellMatrix[observer.X, observer.Y].Gem == gem)
+                    {
+                        if (delta.X != 0)
+                            rowSize.X++;
+                        else
+                            rowSize.Y++;
+                    }
+                    else
+                        break;
+                }
+            }
+
+            return rowSize.X >= 3 || rowSize.Y >= 3;
+        }
+
         private bool TrySpawnGems()
         {
             bool isStatic = true;
@@ -74,9 +132,13 @@ namespace Match3.Core
             {
                 if (_spawnCell[x].Gem is null)
                 {
-                    int choice = Random.Shared.Next(_gems.Count);
-                    _spawnCell[x].SpawnGem(_gems[choice]);
-                    isStatic = false;
+                    int choice;
+                    do
+                    {
+                        choice = Random.Shared.Next(_gems.Count);
+                        _spawnCell[x].SpawnGem(_gems[choice]);
+                        isStatic = false;
+                    } while (CheckRowAt(x, 0));
                 }
             }
             return isStatic;

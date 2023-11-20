@@ -1,7 +1,4 @@
 using Match3.Core;
-using System.Windows.Forms;
-using System;
-using System.Drawing.Imaging;
 
 namespace Match3
 {

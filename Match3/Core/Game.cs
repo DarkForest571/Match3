@@ -40,6 +40,7 @@
                 _yellow,
                 _orange
             });
+            _map.InitGems();
         }
 
         public void Update()
@@ -53,9 +54,13 @@
                 x < _xSize && y < _ySize &&
                 _map.CellAt(x, y) is not null &&
                 _map.CellAt(x, y).IsStatic)
+            {
                 _selectedCell = new Point(x, y);
+            }
             else
+            {
                 ResetCellSelection();
+            }
         }
 
         public void ResetCellSelection()
