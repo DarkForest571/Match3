@@ -14,7 +14,7 @@ namespace Match3.Core
         private Gem _yellow;
         private Gem _orange;
 
-        private Point? _selectedCell;
+        private Vector2? _selectedCell;
 
         public Game(int xSize, int ySize, int physicalFrames)
         {
@@ -33,7 +33,7 @@ namespace Match3.Core
 
         public IReadOnlyMap Map => _map;
 
-        public Point? SelectedCell => _selectedCell;
+        public Vector2? SelectedCell => _selectedCell;
 
         public void Init()
         {
@@ -64,18 +64,17 @@ namespace Match3.Core
                 return;
             }
 
+            Vector2 newPosition = new Vector2(x, y);
             if (_selectedCell == null)
             {
-                _selectedCell = new Point(x, y);
+                _selectedCell = newPosition;
                 return;
             }
 
-            if ((Math.Abs(_selectedCell.Value.X - x) == 1 && _selectedCell.Value.Y - y == 0) ||
-                (Math.Abs(_selectedCell.Value.Y - y) == 1 && _selectedCell.Value.X - x == 0))
+            if (_selectedCell.Value.IsNeighbor(new(x, y)))
             {
-                Point point = new Point(x - _selectedCell.Value.X, y - _selectedCell.Value.Y);
-                Direction direction = Converter.PointToDirection(point);
-                _map.SwapGems(_selectedCell.Value, direction);
+                Vector2 delta = newPosition - _selectedCell.Value;
+                _map.SwapGems(_selectedCell.Value, delta);
                 ResetCellSelection();
             }
         }

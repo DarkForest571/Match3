@@ -1,4 +1,5 @@
 using Match3.Core;
+using Match3.Utils;
 
 namespace Match3
 {
@@ -10,7 +11,7 @@ namespace Match3
         private BufferedGraphics _bufferedGraphics;
 
         private Size _cellSize;
-        private Point _gridOffset;
+        private Vector2 _gridOffset;
 
         private List<Bitmap> _gemsTextures;
         private Bitmap _gridImage;
@@ -25,7 +26,7 @@ namespace Match3
             _graphics = _bufferedGraphics.Graphics;
 
             _cellSize = new Size(100, 100);
-            _gridOffset = new Point(100, 0);
+            _gridOffset = new Vector2(100, 0);
 
             LoadTextures();
         }
@@ -67,12 +68,11 @@ namespace Match3
 
         private void MainForm_MouseClick(object sender, MouseEventArgs e)
         {
-            Point point = e.Location;
+            Vector2 point = new(e.Location);
 
-            point.X -= _gridOffset.X;
-            point.Y -= _gridOffset.Y;
+            point -= _gridOffset;
 
-            if (point.X < 0 || point.Y < 0)
+            if (point < Vector2.Zero)
             {
                 _game.ResetCellSelection();
             }
@@ -104,7 +104,7 @@ namespace Match3
 
             if (_game.SelectedCell is not null)
             {
-                Point position = _game.SelectedCell.Value;
+                Vector2 position = _game.SelectedCell.Value;
                 drawRect.Location = new(position.X * _cellSize.Width + _gridOffset.X, position.Y * _cellSize.Height + _gridOffset.Y);
                 _graphics.DrawImage(_gridHighlightedImage, drawRect);
             }

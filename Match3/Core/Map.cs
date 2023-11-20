@@ -4,7 +4,7 @@ namespace Match3.Core
 {
     public interface IReadOnlyMap
     {
-        public Size Size { get; }
+        public Vector2 Size { get; }
 
         public IReadOnlyCell? CellAt(int x, int y);
     }
@@ -22,8 +22,8 @@ namespace Match3.Core
         private List<Gem> _gems;
 
         private float _swapPram;
-        private Point _swapFrom;
-        private Direction _swapTo;
+        private Vector2 _swapFrom;
+        private Vector2 _swapTo;
         private bool _onOtherCell;
 
         public Map(int x, int y, float gravity)
@@ -36,9 +36,9 @@ namespace Match3.Core
             _gems = new List<Gem>();
         }
 
-        public Map(Size size, float gravity) : this(size.Width, size.Height, gravity) { }
+        public Map(Vector2 size, float gravity) : this(size.X, size.Y, gravity) { }
 
-        public Size Size => new Size(_xSize, _ySize);
+        public Vector2 Size => new Vector2(_xSize, _ySize);
 
         public IReadOnlyCell? CellAt(int x, int y) => _cellMatrix[x, y];
 
@@ -90,14 +90,14 @@ namespace Match3.Core
             return isStatic;
         }
 
-        public void SwapGems(int x, int y, Direction direction) =>
-            SwapGems(new(x, y), direction);
+        public void SwapGems(int x, int y, Vector2 delta) =>
+            SwapGems(new(x, y), delta);
 
-        public void SwapGems(Point point, Direction direction)
+        public void SwapGems(Vector2 point, Vector2 delta)
         {
             _swapPram = 0.0f;
             _swapFrom = point;
-            _swapTo = direction;
+            _swapTo = point + delta;
             _onOtherCell = false;
             // TODO Start swaping
         }
@@ -108,23 +108,23 @@ namespace Match3.Core
             if (gem is null)
                 return false;
 
-            Point[] directionsAndDeltas =
+            Vector2[] directionsAndDeltas =
             {
-                Converter.Up,
-                Converter.Down,
-                Converter.Left,
-                Converter.Right
+                Vector2.Up,
+                Vector2.Down,
+                Vector2.Left,
+                Vector2.Right
             };
-            Point position = new Point(x, y);
-            Point rowSize = new Point(1, 1);
+            Vector2 position = new Vector2(x, y);
+            Vector2 rowSize = Vector2.One;
 
             foreach (var delta in directionsAndDeltas)
             {
-                Point observer = position;
+                Vector2 observer = position;
 
                 for (int i = 0; i < 2; ++i)
                 {
-                    observer.Offset(delta);
+                    observer += delta;
                     if (InBounds(observer) &&
                         _cellMatrix[observer.X, observer.Y].Gem == gem &&
                         _cellMatrix[observer.X, observer.Y].IsStatic)
@@ -209,6 +209,6 @@ namespace Match3.Core
             x >= 0 && y >= 0 &&
             x < _xSize && y < _ySize;
 
-        public bool InBounds(Point point) => InBounds(point.X, point.Y);
+        public bool InBounds(Vector2 point) => InBounds(point.X, point.Y);
     }
 }

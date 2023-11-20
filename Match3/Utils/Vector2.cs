@@ -1,6 +1,6 @@
 ﻿namespace Match3.Utils
 {
-    struct Vector2
+    public struct Vector2
     {
         public int X, Y;
 
@@ -9,19 +9,34 @@
             (X, Y) = (x, y);
         }
 
+        public Vector2(Point point)
+        {
+            (X, Y) = (point.X, point.Y);
+        }
+
+        public bool IsNeighbor(Vector2 vector)
+        {
+            Vector2 delta = this - vector;
+            if (delta == Up || delta == Down || delta == Left || delta == Right)
+                return true;
+            return false;
+        }
+
         private static Vector2 _zero = new Vector2(0, 0);
+        private static Vector2 _one = new Vector2(1, 1);
 
         private static Vector2 _up = new Vector2(0, -1);
-        private static Vector2 _right = new Vector2(1, 0);
         private static Vector2 _down = new Vector2(0, 1);
         private static Vector2 _left = new Vector2(-1, 0);
+        private static Vector2 _right = new Vector2(1, 0);
 
         public static Vector2 Zero => _zero;
+        public static Vector2 One => _one;
 
         public static Vector2 Up => _up;
-        public static Vector2 Right => _right;
-        public static Vector2 Left => _left;
         public static Vector2 Down => _down;
+        public static Vector2 Left => _left;
+        public static Vector2 Right => _right;
 
         public static bool operator <(Vector2 left, Vector2 right) => left.X < right.X && left.Y < right.Y;
 
