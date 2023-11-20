@@ -6,7 +6,8 @@ namespace Match3.Core
     {
         private Cell _from;
         private Cell _to;
-        private Vector2 _delta;
+        private float _deltaX;
+        private float _deltaY;
         private float _tParam;
         private float _tParamDelta;
 
@@ -24,7 +25,8 @@ namespace Match3.Core
         {
             _from = from;
             _to = to;
-            _delta = delta;
+            _deltaX = delta.X;
+            _deltaY = delta.Y;
             _tParam = 0.0f;
             _swapInProgress = true;
         }
@@ -34,6 +36,19 @@ namespace Match3.Core
             if (!_swapInProgress)
                 return;
 
+            _tParam += _tParamDelta;
+            float slerp = (float)Math.Sin(_tParam * Math.PI / 2);
+
+            _from.SetOffset(_deltaX * slerp, _deltaY * slerp);
+            _to.SetOffset(-_deltaX * slerp, -_deltaY * slerp);
+            
+            if (_tParam >= 1.0f)
+            {
+                _from.SwapGems(_to);
+                _from.SetStatic();
+                _to.SetStatic();
+                _swapInProgress = false;
+            }
         }
     }
 }

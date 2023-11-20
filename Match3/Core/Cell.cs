@@ -48,6 +48,11 @@ namespace Match3.Core
             _yVelocity = 0.0f;
         }
 
+        public void SwapGems(Cell cell)
+        {
+            (_gem, cell._gem) = (cell._gem, _gem);
+        }
+
         public void MoveGemTo(Cell cell, Direction direction)
         {
             if (cell._gem is null)
@@ -92,9 +97,16 @@ namespace Match3.Core
             _yOffset += _yVelocity;
         }
 
+        public void SetOffset(float x, float y)
+        {
+            _xOffset = x;
+            _yOffset = y;
+        }
+
         public void SetStatic()
         {
             _isStatic = true;
+            _xVelocity = 0.0f;
             _yVelocity = 0.0f;
             _xOffset = 0.0f;
             _yOffset = 0.0f;

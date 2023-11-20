@@ -25,7 +25,7 @@ namespace Match3.Core
 
         private CellSwapper _cellSwapper;
 
-        public Map(int x, int y, float gravity)
+        public Map(int x, int y, float gravity, float swapSpeed)
         {
             _gravity = gravity;
             _xSize = x;
@@ -33,10 +33,10 @@ namespace Match3.Core
             _cellMatrix = new Cell[x, y];
             _spawnCell = new Cell[x];
             _gems = new List<Gem>();
-            _cellSwapper = new CellSwapper(gravity);
+            _cellSwapper = new CellSwapper(swapSpeed);
         }
 
-        public Map(Vector2 size, float gravity) : this(size.X, size.Y, gravity) { }
+        public Map(Vector2 size, float gravity, float swapSpeed) : this(size.X, size.Y, gravity, swapSpeed) { }
 
         public Vector2 Size => new Vector2(_xSize, _ySize);
 
@@ -70,9 +70,7 @@ namespace Match3.Core
                     {
                         choice = Random.Shared.Next(_gems.Count);
                         _cellMatrix[x, y].SpawnGem(_gems[choice]);
-                    } while (CheckRowAt(x, y));
-                    if (CheckRowAt(x, y))
-                        throw new Exception();
+                    } while (CheckRowAt(x, y, true));
                 }
             }
         }
@@ -96,7 +94,7 @@ namespace Match3.Core
                                  second - first);
         }
 
-        public bool CheckRowAt(int x, int y)
+        public bool CheckRowAt(int x, int y, bool checkDynamic)
         {
             Gem? gem = _cellMatrix[x, y].Gem;
             if (gem is null)
@@ -121,7 +119,7 @@ namespace Match3.Core
                     observer += delta;
                     if (InBounds(observer) &&
                         _cellMatrix[observer.X, observer.Y].Gem == gem &&
-                        _cellMatrix[observer.X, observer.Y].IsStatic)
+                        (_cellMatrix[observer.X, observer.Y].IsStatic || checkDynamic))
                     {
                         if (delta.X != 0)
                             rowSize.X++;
@@ -149,7 +147,7 @@ namespace Match3.Core
                         choice = Random.Shared.Next(_gems.Count);
                         _spawnCell[x].SpawnGem(_gems[choice]);
                         isStatic = false;
-                    } while (CheckRowAt(x, 0));
+                    } while (CheckRowAt(x, 0, false));
                 }
             }
             return isStatic;

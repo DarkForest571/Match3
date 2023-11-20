@@ -20,7 +20,8 @@ namespace Match3.Core
         {
             _xSize = xSize;
             _ySize = ySize;
-            _map = new Map(_xSize, _ySize, 1f / physicalFrames);
+            float timePerFrame = 1f / physicalFrames;
+            _map = new Map(_xSize, _ySize, timePerFrame, timePerFrame * 5);
 
             _red = new Gem(0);
             _green = new Gem(1);
