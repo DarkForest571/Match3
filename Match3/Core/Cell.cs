@@ -53,38 +53,43 @@ namespace Match3.Core
             (_gem, cell._gem) = (cell._gem, _gem);
         }
 
+        public void ClearGem()
+        {
+            _gem = null;
+            _isStatic = false;
+        }
+
         public void MoveGemTo(Cell cell, Direction direction)
         {
-            if (cell._gem is null)
-            {
-                cell._xVelocity = _xVelocity;
-                cell._yVelocity = _yVelocity;
-                cell._gem = _gem;
-                _gem = null;
-                switch (direction)
-                {
-                    case Direction.Up:
-                        cell._xOffset = _xOffset;
-                        cell._yOffset = _yOffset + 1.0f;
-                        break;
-                    case Direction.Down:
-                        cell._xOffset = _xOffset;
-                        cell._yOffset = _yOffset - 1.0f;
-                        break;
-                    case Direction.Left:
-                        cell._xOffset = _xOffset + 1.0f;
-                        cell._yOffset = _yOffset;
-                        break;
-                    case Direction.Right:
-                        cell._xOffset = _xOffset - 1.0f;
-                        cell._yOffset = _yOffset;
-                        break;
-                    default:
-                        throw new NotImplementedException();
-                }
-            }
-            else
+            if (cell._gem is not null)
                 throw new InvalidOperationException();
+
+            _isStatic = false;
+            cell._xVelocity = _xVelocity;
+            cell._yVelocity = _yVelocity;
+            cell._gem = _gem;
+            _gem = null;
+            switch (direction)
+            {
+                case Direction.Up:
+                    cell._xOffset = _xOffset;
+                    cell._yOffset = _yOffset + 1.0f;
+                    break;
+                case Direction.Down:
+                    cell._xOffset = _xOffset;
+                    cell._yOffset = _yOffset - 1.0f;
+                    break;
+                case Direction.Left:
+                    cell._xOffset = _xOffset + 1.0f;
+                    cell._yOffset = _yOffset;
+                    break;
+                case Direction.Right:
+                    cell._xOffset = _xOffset - 1.0f;
+                    cell._yOffset = _yOffset;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         public void ApplyGravity(float gravity)

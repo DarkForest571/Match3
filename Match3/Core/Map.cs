@@ -90,7 +90,7 @@ namespace Match3.Core
                 if (CheckRowAt(_cellSwapper.SecondPosition))
                 {
                     _cellSwapper.Finish();
-                    // Break them all
+                    BreakRowAt(_cellSwapper.SecondPosition);
                 }
                 else
                 {
@@ -150,6 +150,43 @@ namespace Match3.Core
             return rowSize.X >= 3 || rowSize.Y >= 3;
         }
 
+        public void BreakRowAt(Vector2 position) =>
+            BreakRowAt(position.X, position.Y);
+
+        public void BreakRowAt(int x, int y)
+        {
+            Gem? gem = _cellMatrix[x, y].Gem;
+            if (gem is null)
+                throw new InvalidOperationException();
+
+            Vector2[] directionsAndDeltas =
+            {
+                Vector2.Up,
+                Vector2.Down,
+                Vector2.Left,
+                Vector2.Right
+            };
+            Vector2 position = new Vector2(x, y);
+
+            foreach (var delta in directionsAndDeltas)
+            {
+                Vector2 observer = position;
+
+                for (int i = 0; i < 2; ++i)
+                {
+                    observer += delta;
+                    if (InBounds(observer) &&
+                        _cellMatrix[observer.X, observer.Y].Gem == gem)
+                    {
+                        _cellMatrix[observer.X, observer.Y].ClearGem();
+                    }
+                    else
+                        break;
+                }
+            }
+            _cellMatrix[x, y].ClearGem();
+        }
+
         private bool SpawnGems()
         {
             bool isStatic = true;
@@ -185,7 +222,7 @@ namespace Match3.Core
         private bool ApplyGravityToCell(int xPosition, int yPosition)
         {
             Cell cell = _cellMatrix[xPosition, yPosition];
-            if (cell.Gem is null || cell.IsStatic)
+            if (cell.Gem is null)
                 return true;
 
             cell.ApplyGravity(_gravity);
@@ -195,7 +232,11 @@ namespace Match3.Core
             if (bottomCellY == _ySize || _cellMatrix[xPosition, bottomCellY].IsStatic)
             {
                 if (cell.YOffset >= 0.0f)
+                {
                     cell.SetStatic();
+                    if (CheckRowAt(xPosition, yPosition))
+                        BreakRowAt(xPosition, yPosition);
+                }
                 return cell.IsStatic;
             }
 
