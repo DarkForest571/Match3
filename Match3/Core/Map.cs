@@ -87,7 +87,12 @@ namespace Match3.Core
             _cellSwapper.Update();
             if (_cellSwapper.State == SwapperState.Ready)
             {
-                if (CheckRowAt(_cellSwapper.SecondPosition))
+                if (CheckRowAt(_cellSwapper.FirstPosition))
+                {
+                    _cellSwapper.Finish();
+                    BreakRowAt(_cellSwapper.FirstPosition);
+                }
+                else if (CheckRowAt(_cellSwapper.SecondPosition))
                 {
                     _cellSwapper.Finish();
                     BreakRowAt(_cellSwapper.SecondPosition);
