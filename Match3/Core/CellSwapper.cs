@@ -2,52 +2,82 @@
 
 namespace Match3.Core
 {
+    public enum SwapperState
+    {
+        Idle,
+        Swapping,
+        Ready,
+        ReverseSwapping
+    }
+
     public class CellSwapper
     {
-        private Cell _from;
-        private Cell _to;
+        private Cell _firstCell;
+        private Cell _secondCell;
+        private Vector2 _firstPosition;
+        private Vector2 _secondPosition;
         private float _deltaX;
         private float _deltaY;
         private float _tParam;
         private float _tParamDelta;
 
-        private bool _swapInProgress;
+        private SwapperState _state;
 
         public CellSwapper(float tParamDelta)
         {
             _tParamDelta = tParamDelta;
-            _swapInProgress = false;
+            _state = SwapperState.Idle;
         }
 
-        public bool SwapInProgress => _swapInProgress;
+        public Vector2 FirstPosition => _firstPosition;
+        public Vector2 SecondPosition => _secondPosition;
 
-        public void InitSwap(Cell from, Cell to, Vector2 delta)
+        public SwapperState State => _state;
+
+        public void InitSwap(Cell first, Cell second, Vector2 firstPosition, Vector2 secondPosition)
         {
-            _from = from;
-            _to = to;
-            _deltaX = delta.X;
-            _deltaY = delta.Y;
+            (_firstCell, _secondCell) = (first, second);
+            (_firstPosition, _secondPosition) = (firstPosition, secondPosition);
+            Vector2 delta = secondPosition - firstPosition;
+            (_deltaX, _deltaY) = (delta.X, delta.Y);
             _tParam = 0.0f;
-            _swapInProgress = true;
+            _state = SwapperState.Swapping;
+        }
+
+        public void SetReverse()
+        {
+            (_firstCell, _secondCell) = (_secondCell, _firstCell);
+            (_deltaX, _deltaY) = (-_deltaX, -_deltaY);
+            _tParam = 0.0f;
+            _state = SwapperState.ReverseSwapping;
+        }
+
+        public void Finish()
+        {
+            _state = SwapperState.Idle;
         }
 
         public void Update()
         {
-            if (!_swapInProgress)
+            if (_state == SwapperState.Idle)
                 return;
 
             _tParam += _tParamDelta;
             float slerp = (float)Math.Sin(_tParam * Math.PI / 2);
 
-            _from.SetOffset(_deltaX * slerp, _deltaY * slerp);
-            _to.SetOffset(-_deltaX * slerp, -_deltaY * slerp);
-            
+            _firstCell.SetOffset(_deltaX * slerp, _deltaY * slerp);
+            _secondCell.SetOffset(-_deltaX * slerp, -_deltaY * slerp);
+
             if (_tParam >= 1.0f)
             {
-                _from.SwapGems(_to);
-                _from.SetStatic();
-                _to.SetStatic();
-                _swapInProgress = false;
+                _firstCell.SwapGems(_secondCell);
+                _firstCell.SetStatic();
+                _secondCell.SetStatic();
+
+                if (_state == SwapperState.Swapping)
+                    _state = SwapperState.Ready;
+                else
+                    _state = SwapperState.Idle;
             }
         }
     }

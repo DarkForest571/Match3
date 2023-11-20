@@ -42,7 +42,7 @@ namespace Match3.Core
 
         public IReadOnlyCell? CellAt(int x, int y) => _cellMatrix[x, y];
 
-        public bool SwapInProgress => _cellSwapper.SwapInProgress;
+        public bool SwapInProgress => _cellSwapper.State != SwapperState.Idle;
 
         public virtual void InitMap()
         {
@@ -85,16 +85,32 @@ namespace Match3.Core
             ApplyGravity();
             SpawnGems();
             _cellSwapper.Update();
+            if (_cellSwapper.State == SwapperState.Ready)
+            {
+                if (CheckRowAt(_cellSwapper.SecondPosition))
+                {
+                    _cellSwapper.Finish();
+                    // Break them all
+                }
+                else
+                {
+                    _cellSwapper.SetReverse();
+                }
+            }
         }
 
         public void SwapGems(Vector2 first, Vector2 second)
         {
             _cellSwapper.InitSwap(_cellMatrix[first.X, first.Y],
                                  _cellMatrix[second.X, second.Y],
-                                 second - first);
+                                 first,
+                                 second);
         }
 
-        public bool CheckRowAt(int x, int y, bool checkDynamic)
+        public bool CheckRowAt(Vector2 position, bool checkDynamic = false) =>
+            CheckRowAt(position.X, position.Y, checkDynamic);
+
+        public bool CheckRowAt(int x, int y, bool checkDynamic = false)
         {
             Gem? gem = _cellMatrix[x, y].Gem;
             if (gem is null)
@@ -147,7 +163,7 @@ namespace Match3.Core
                         choice = Random.Shared.Next(_gems.Count);
                         _spawnCell[x].SpawnGem(_gems[choice]);
                         isStatic = false;
-                    } while (CheckRowAt(x, 0, false));
+                    } while (CheckRowAt(x, 0));
                 }
             }
             return isStatic;
