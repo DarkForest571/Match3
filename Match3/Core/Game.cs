@@ -56,7 +56,8 @@ namespace Match3.Core
 
         public void SelectCell(int x, int y)
         {
-            if (!_map.InBounds(x, y) ||
+            if (_map.SwapInProgress ||
+                !_map.InBounds(x, y) ||
                 _map.CellAt(x, y) is null ||
                 !_map.CellAt(x, y).IsStatic)
             {
@@ -68,13 +69,13 @@ namespace Match3.Core
             if (_selectedCell == null)
             {
                 _selectedCell = newPosition;
-                return;
             }
-
-            if (_selectedCell.Value.IsNeighbor(new(x, y)))
+            else
             {
-                Vector2 delta = newPosition - _selectedCell.Value;
-                _map.SwapGems(_selectedCell.Value, delta);
+                if (_selectedCell.Value.IsNeighbor(new(x, y)))
+                {
+                    _map.SwapGems(_selectedCell.Value, newPosition);
+                }
                 ResetCellSelection();
             }
         }

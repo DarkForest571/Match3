@@ -7,6 +7,8 @@ namespace Match3.Core
         public Vector2 Size { get; }
 
         public IReadOnlyCell? CellAt(int x, int y);
+
+        public bool SwapInProgress { get; }
     }
 
     public class Map : IReadOnlyMap
@@ -21,10 +23,7 @@ namespace Match3.Core
 
         private List<Gem> _gems;
 
-        private float _swapPram;
-        private Vector2 _swapFrom;
-        private Vector2 _swapTo;
-        private bool _onOtherCell;
+        private CellSwapper _cellSwapper;
 
         public Map(int x, int y, float gravity)
         {
@@ -34,6 +33,7 @@ namespace Match3.Core
             _cellMatrix = new Cell[x, y];
             _spawnCell = new Cell[x];
             _gems = new List<Gem>();
+            _cellSwapper = new CellSwapper(gravity);
         }
 
         public Map(Vector2 size, float gravity) : this(size.X, size.Y, gravity) { }
@@ -41,6 +41,8 @@ namespace Match3.Core
         public Vector2 Size => new Vector2(_xSize, _ySize);
 
         public IReadOnlyCell? CellAt(int x, int y) => _cellMatrix[x, y];
+
+        public bool SwapInProgress => _cellSwapper.SwapInProgress;
 
         public virtual void InitMap()
         {
@@ -80,26 +82,18 @@ namespace Match3.Core
             _gems = gems;
         }
 
-        public bool Update()
+        public void Update()
         {
-            bool isStatic = true;
-
-            isStatic |= ApplyGravityToMap();
-            isStatic |= SpawnGems();
-
-            return isStatic;
+            ApplyGravity();
+            SpawnGems();
+            _cellSwapper.Update();
         }
 
-        public void SwapGems(int x, int y, Vector2 delta) =>
-            SwapGems(new(x, y), delta);
-
-        public void SwapGems(Vector2 point, Vector2 delta)
+        public void SwapGems(Vector2 first, Vector2 second)
         {
-            _swapPram = 0.0f;
-            _swapFrom = point;
-            _swapTo = point + delta;
-            _onOtherCell = false;
-            // TODO Start swaping
+            _cellSwapper.InitSwap(_cellMatrix[first.X, first.Y],
+                                 _cellMatrix[second.X, second.Y],
+                                 second - first);
         }
 
         public bool CheckRowAt(int x, int y)
@@ -161,21 +155,22 @@ namespace Match3.Core
             return isStatic;
         }
 
-        private bool ApplyGravityToMap()
+        private bool ApplyGravity()
         {
             bool isStatic = false;
             for (int y = _xSize - 1; y >= 0; --y)
             {
                 for (int x = _xSize - 1; x >= 0; --x)
                 {
-                    isStatic &= ApplyGravityToCell(_cellMatrix[x, y], x, y);
+                    isStatic &= ApplyGravityToCell(x, y);
                 }
             }
             return isStatic;
         }
 
-        private bool ApplyGravityToCell(Cell cell, int xPosition, int yPosition)
+        private bool ApplyGravityToCell(int xPosition, int yPosition)
         {
+            Cell cell = _cellMatrix[xPosition, yPosition];
             if (cell.Gem is null || cell.IsStatic)
                 return true;
 
@@ -198,7 +193,7 @@ namespace Match3.Core
                     cell.MoveGemTo(bottomCell, Direction.Down);
                 }
                 else
-                    throw new Exception();
+                    throw new InvalidOperationException();
             }
 
 
