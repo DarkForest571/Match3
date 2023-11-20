@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+﻿using Match3.Utils;
 
 namespace Match3.Core
 {
@@ -11,24 +11,27 @@ namespace Match3.Core
 
     public class Map : IReadOnlyMap
     {
+        private float _gravity;
+
         private int _xSize;
         private int _ySize;
 
         private Cell[,] _cellMatrix;
-        private SpawnCell[] _spawnCell;
+        private Cell[] _spawnCell;
 
         private List<Gem> _gems;
 
-        public Map(int x, int y)
+        public Map(int x, int y, float gravity)
         {
+            _gravity = gravity;
             _xSize = x;
             _ySize = y;
             _cellMatrix = new Cell[x, y];
-            _spawnCell = new SpawnCell[x];
+            _spawnCell = new Cell[x];
             _gems = new List<Gem>();
         }
 
-        public Map(Size size) : this(size.Width, size.Height) { }
+        public Map(Size size, float gravity) : this(size.Width, size.Height, gravity) { }
 
         public Size Size => new Size(_xSize, _ySize);
 
@@ -36,21 +39,16 @@ namespace Match3.Core
 
         public virtual void InitMap()
         {
-            int lastRow = _ySize - 1;
-            for (int y = lastRow; y >= 1; --y)
+            for (int y = 0; y < _ySize; ++y)
             {
-                for (int x = _xSize - 1; x >= 0; --x)
+                for (int x = 0; x < _xSize; ++x)
                 {
                     _cellMatrix[x, y] = new Cell();
-                    if (y < lastRow)
-                        _cellMatrix[x, y].SetBottomCell(_cellMatrix[x, y + 1]);
                 }
             }
             for (int x = 0; x < _xSize; ++x)
             {
-                _spawnCell[x] = new SpawnCell();
-                _cellMatrix[x, 0] = _spawnCell[x];
-                _cellMatrix[x, 0].SetBottomCell(_cellMatrix[x, 1]);
+                _spawnCell[x] = _cellMatrix[x, 0];
             }
         }
 
@@ -59,28 +57,73 @@ namespace Match3.Core
             _gems = gems;
         }
 
-        public void Update(float gravity)
+        public bool Update()
         {
-            for (int y = _xSize - 1; y >= 0; --y)
-            {
-                for (int x = _xSize - 1; x >= 0; --x)
-                {
-                    _cellMatrix[x, y].Update(gravity);
-                }
-            }
-            TrySpawnGems();
+            bool isStatic = true;
+
+            isStatic |= ApplyGravityToMap();
+            isStatic |= TrySpawnGems();
+
+            return isStatic;
         }
 
-        private void TrySpawnGems()
+        private bool TrySpawnGems()
         {
+            bool isStatic = true;
             for (int x = 0; x < _xSize; ++x)
             {
                 if (_spawnCell[x].Gem is null)
                 {
                     int choice = Random.Shared.Next(_gems.Count);
-                    _spawnCell[x].AddGem(_gems[choice]);
+                    _spawnCell[x].SpawnGem(_gems[choice]);
+                    isStatic = false;
                 }
             }
+            return isStatic;
+        }
+
+        private bool ApplyGravityToMap()
+        {
+            bool isStatic = false;
+            for (int y = _xSize - 1; y >= 0; --y)
+            {
+                for (int x = _xSize - 1; x >= 0; --x)
+                {
+                    isStatic &= ApplyGravityToCell(_cellMatrix[x, y], x, y);
+                }
+            }
+            return isStatic;
+        }
+
+        private bool ApplyGravityToCell(Cell cell, int xPosition, int yPosition)
+        {
+            if (cell.Gem is null || cell.IsStatic)
+                return true;
+
+            cell.ApplyGravity(_gravity);
+            cell.ApplyFallVelocity();
+
+            int bottomCellY = yPosition + 1;
+            if (bottomCellY == _ySize || _cellMatrix[xPosition, bottomCellY].IsStatic)
+            {
+                if (cell.YOffset >= 0.0f)
+                    cell.SetStatic();
+                return cell.IsStatic;
+            }
+
+            if (cell.YOffset > 0.5f)
+            {
+                Cell bottomCell = _cellMatrix[xPosition, bottomCellY];
+                if (bottomCell.Gem is null)
+                {
+                    cell.MoveGemTo(bottomCell, Direction.Down);
+                }
+                else
+                    throw new Exception();
+            }
+
+
+            return cell.IsStatic;
         }
     }
 }

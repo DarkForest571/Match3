@@ -1,4 +1,4 @@
-﻿namespace Match3
+﻿namespace Match3.Core
 {
     public class Gem
     {

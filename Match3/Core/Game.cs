@@ -14,19 +14,15 @@
 
         private Point _selectedCell;
 
-        private float _gravity;
-
         public Game(int physicalFrames)
         {
-            _map = new Map(_xSize, _ySize);
+            _map = new Map(_xSize, _ySize, 1f / physicalFrames);
 
             _red = new Gem(0);
             _green = new Gem(1);
             _blue = new Gem(2);
             _yellow = new Gem(3);
             _orange = new Gem(4);
-
-            _gravity = 1f / physicalFrames;
         }
 
         public IReadOnlyMap Map => _map;
@@ -48,12 +44,15 @@
 
         public void Update()
         {
-            _map.Update(_gravity);
+            _map.Update();
         }
 
         public void SelectCell(int x, int y)
         {
-            if (x >= 0 && y >= 0 && x < _xSize && y < _ySize)
+            if (x >= 0 && y >= 0 &&
+                x < _xSize && y < _ySize &&
+                _map.CellAt(x, y) is not null &&
+                _map.CellAt(x, y).IsStatic)
                 _selectedCell = new Point(x, y);
             else
                 ResetCellSelection();
