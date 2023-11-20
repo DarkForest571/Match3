@@ -21,6 +21,11 @@ namespace Match3.Core
 
         private List<Gem> _gems;
 
+        private float _swapPram;
+        private Point _swapFrom;
+        private Direction _swapTo;
+        private bool _onOtherCell;
+
         public Map(int x, int y, float gravity)
         {
             _gravity = gravity;
@@ -80,9 +85,21 @@ namespace Match3.Core
             bool isStatic = true;
 
             isStatic |= ApplyGravityToMap();
-            isStatic |= TrySpawnGems();
+            isStatic |= SpawnGems();
 
             return isStatic;
+        }
+
+        public void SwapGems(int x, int y, Direction direction) =>
+            SwapGems(new(x, y), direction);
+
+        public void SwapGems(Point point, Direction direction)
+        {
+            _swapPram = 0.0f;
+            _swapFrom = point;
+            _swapTo = direction;
+            _onOtherCell = false;
+            // TODO Start swaping
         }
 
         public bool CheckRowAt(int x, int y)
@@ -93,10 +110,10 @@ namespace Match3.Core
 
             Point[] directionsAndDeltas =
             {
-                new Point(0, -1),
-                new Point(0, 1),
-                new Point(-1, 0),
-                new Point(1, 0)
+                Converter.Up,
+                Converter.Down,
+                Converter.Left,
+                Converter.Right
             };
             Point position = new Point(x, y);
             Point rowSize = new Point(1, 1);
@@ -108,9 +125,9 @@ namespace Match3.Core
                 for (int i = 0; i < 2; ++i)
                 {
                     observer.Offset(delta);
-                    if (observer.X >= 0 && observer.Y >= 0 &&
-                        observer.X < _xSize && observer.Y < _ySize &&
-                        _cellMatrix[observer.X, observer.Y].Gem == gem)
+                    if (InBounds(observer) &&
+                        _cellMatrix[observer.X, observer.Y].Gem == gem &&
+                        _cellMatrix[observer.X, observer.Y].IsStatic)
                     {
                         if (delta.X != 0)
                             rowSize.X++;
@@ -125,7 +142,7 @@ namespace Match3.Core
             return rowSize.X >= 3 || rowSize.Y >= 3;
         }
 
-        private bool TrySpawnGems()
+        private bool SpawnGems()
         {
             bool isStatic = true;
             for (int x = 0; x < _xSize; ++x)
@@ -187,5 +204,11 @@ namespace Match3.Core
 
             return cell.IsStatic;
         }
+
+        public bool InBounds(int x, int y) =>
+            x >= 0 && y >= 0 &&
+            x < _xSize && y < _ySize;
+
+        public bool InBounds(Point point) => InBounds(point.X, point.Y);
     }
 }

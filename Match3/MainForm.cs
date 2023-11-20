@@ -16,7 +16,6 @@ namespace Match3
         private Bitmap _gridImage;
         private Bitmap _gridHighlightedImage;
 
-
         public MainForm(Game game)
         {
             _game = game;
@@ -28,6 +27,11 @@ namespace Match3
             _cellSize = new Size(100, 100);
             _gridOffset = new Point(100, 0);
 
+            LoadTextures();
+        }
+
+        private void LoadTextures()
+        {
             Bitmap gemsTexture = new Bitmap("..\\..\\..\\..\\img\\sprite_fruit_face_atlas_01.png");
             gemsTexture = new Bitmap(gemsTexture, 400, 400);
             _gemsTextures = new List<Bitmap>();
@@ -117,7 +121,7 @@ namespace Match3
                     IReadOnlyCell? cell = map.CellAt(x, y);
                     if (cell is not null && cell.Gem is not null)
                     {
-                        drawRect.Location = new(x * _cellSize.Width + _gridOffset.X,
+                        drawRect.Location = new((int)((x + cell.XOffset) * _cellSize.Width) + _gridOffset.X,
                             (int)((y + cell.YOffset) * _cellSize.Height) + _gridOffset.Y);
                         _graphics.DrawImage(_gemsTextures[cell.Gem.ID], drawRect);
                     }

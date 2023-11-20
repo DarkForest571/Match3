@@ -13,7 +13,7 @@ namespace Match3
         static void Main()
         {
             int physicalFrames = 50;
-            _game = new(physicalFrames);
+            _game = new(8, 8, physicalFrames);
             _game.Init();
 
             ApplicationConfiguration.Initialize();

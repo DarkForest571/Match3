@@ -1,9 +1,11 @@
-﻿namespace Match3.Core
+﻿using Match3.Utils;
+
+namespace Match3.Core
 {
     public class Game
     {
-        private const int _xSize = 8;
-        private const int _ySize = 8;
+        private int _xSize;
+        private int _ySize;
         private Map _map;
 
         private Gem _red;
@@ -12,10 +14,12 @@
         private Gem _yellow;
         private Gem _orange;
 
-        private Point _selectedCell;
+        private Point? _selectedCell;
 
-        public Game(int physicalFrames)
+        public Game(int xSize, int ySize, int physicalFrames)
         {
+            _xSize = xSize;
+            _ySize = ySize;
             _map = new Map(_xSize, _ySize, 1f / physicalFrames);
 
             _red = new Gem(0);
@@ -23,11 +27,13 @@
             _blue = new Gem(2);
             _yellow = new Gem(3);
             _orange = new Gem(4);
+
+            _selectedCell = null;
         }
 
         public IReadOnlyMap Map => _map;
 
-        public Point? SelectedCell => _selectedCell.X > -1 ? _selectedCell : null;
+        public Point? SelectedCell => _selectedCell;
 
         public void Init()
         {
@@ -50,22 +56,33 @@
 
         public void SelectCell(int x, int y)
         {
-            if (x >= 0 && y >= 0 &&
-                x < _xSize && y < _ySize &&
-                _map.CellAt(x, y) is not null &&
-                _map.CellAt(x, y).IsStatic)
+            if (!_map.InBounds(x, y) ||
+                _map.CellAt(x, y) is null ||
+                !_map.CellAt(x, y).IsStatic)
+            {
+                ResetCellSelection();
+                return;
+            }
+
+            if (_selectedCell == null)
             {
                 _selectedCell = new Point(x, y);
+                return;
             }
-            else
+
+            if ((Math.Abs(_selectedCell.Value.X - x) == 1 && _selectedCell.Value.Y - y == 0) ||
+                (Math.Abs(_selectedCell.Value.Y - y) == 1 && _selectedCell.Value.X - x == 0))
             {
+                Point point = new Point(x - _selectedCell.Value.X, y - _selectedCell.Value.Y);
+                Direction direction = Converter.PointToDirection(point);
+                _map.SwapGems(_selectedCell.Value, direction);
                 ResetCellSelection();
             }
         }
 
         public void ResetCellSelection()
         {
-            _selectedCell = new Point(-1);
+            _selectedCell = null;
         }
     }
 }
