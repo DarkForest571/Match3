@@ -103,6 +103,8 @@ namespace Match3.Core
                     ActivateRowAt(_cellSwapper.SecondPosition);
             }
 
+            UpdateAllCells();
+
             DestroyExpiredGems();
         }
 
@@ -114,7 +116,19 @@ namespace Match3.Core
                                  second);
         }
 
+        public void UpdateAllCells()
+        {
+            for (int y = 0; y < _xSize; ++y)
+            {
+                for (int x = 0; x < _xSize; ++x)
+                {
+                    _cellMatrix[x, y].Update();
+                }
+            }
+        }
+
         #region Check and activate combo
+
         public bool CheckRowAt(Vector2 position, bool checkDynamic = false) =>
             CheckRowAt(position.X, position.Y, checkDynamic);
 
@@ -184,7 +198,7 @@ namespace Match3.Core
                         _cellMatrix[observer.X, observer.Y].IsStatic &&
                         gem.Equals(_cellMatrix[observer.X, observer.Y].Gem))
                     {
-                        _cellMatrix[observer.X, observer.Y].ActivateGem(null);
+                        _cellMatrix[observer.X, observer.Y].ActivateGem();
                     }
                     else
                         break;
@@ -197,13 +211,13 @@ namespace Match3.Core
 
         private Gem? CalcBonus(IReadOnlyGem gem, Vector2 rowSize)
         {
+            if (rowSize.X == 5 || rowSize.Y == 5 ||
+                (rowSize.X >= 3 && rowSize.Y >= 3))
+                return new BombGem(gem, 1, _gravity);
             if (rowSize.X == 4)
                 return new LineGem(gem, LineGemType.Vertical);
             if (rowSize.Y == 4)
                 return new LineGem(gem, LineGemType.Horizontal);
-            if (rowSize.X == 5 || rowSize.Y == 5 ||
-                (rowSize.X >= 3 && rowSize.Y >= 3))
-                return new BombGem(gem, 1, _gravity);
             return null;
         }
 
@@ -223,15 +237,38 @@ namespace Match3.Core
             }
         }
 
-        public void DestroyExpiredGems()
+        private void DestroyExpiredGems()
         {
             for (int y = _xSize - 1; y >= 0; --y)
             {
                 for (int x = _xSize - 1; x >= 0; --x)
                 {
                     IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
-                    if (gem is not null && gem.ReadyToDestroy)
+                    if (gem is not null && gem.State == GemState.ReadyToDestroy)
+                    {
                         _cellMatrix[x, y].DestroyGem();
+                        if (gem is BombGem)
+                        {
+                            BombGem bombGem = (BombGem)gem;
+                            Vector2 delta = new Vector2(bombGem.ExplosionRadius, bombGem.ExplosionRadius);
+                            ActivateArea(new Vector2(x, y) - delta, new Vector2(x, y) + delta);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ActivateArea(Vector2 upperLeft, Vector2 bottomRight)
+        {
+            if (upperLeft > bottomRight)
+                throw new InvalidOperationException();
+
+            for (int y = upperLeft.Y; y <= bottomRight.Y; ++y)
+            {
+                for (int x = upperLeft.X; x <= bottomRight.X; ++x)
+                {
+                    if (InBounds(x, y))
+                        _cellMatrix[x, y].ActivateGem();
                 }
             }
         }
@@ -250,14 +287,16 @@ namespace Match3.Core
         private bool ApplyGravityToCell(int xPosition, int yPosition)
         {
             Cell cell = _cellMatrix[xPosition, yPosition];
-            if (cell.Gem is null)
+            if (cell.Gem is null || cell.Gem.State != GemState.Idle)
                 return true;
 
             cell.ApplyGravity(_gravity);
             cell.ApplyFallVelocity();
 
             int bottomCellY = yPosition + 1;
-            if (bottomCellY == _ySize || _cellMatrix[xPosition, bottomCellY].IsStatic)
+            if (bottomCellY == _ySize ||
+                _cellMatrix[xPosition, bottomCellY].IsStatic ||
+                _cellMatrix[xPosition, bottomCellY].Gem?.State == GemState.Idle)
             {
                 if (cell.YOffset >= 0.0f)
                 {

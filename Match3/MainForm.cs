@@ -1,6 +1,9 @@
 using Match3.Core;
 using Match3.Core.Gems;
 using Match3.Utils;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 
 namespace Match3
 {
@@ -189,8 +192,21 @@ namespace Match3
                             (int)((y + cell.YOffset) * _cellSize.Height) + _gridOffset.Y);
                         switch (cell.Gem)
                         {
-                            case BombGem:
-                                _graphics.DrawImage(_bombTextures[cell.Gem.ColorID], drawRect);
+                            case BombGem bombGem:
+                                if (bombGem.State == GemState.Active)
+                                {
+                                    _graphics.DrawImage(_bombTextures[cell.Gem.ColorID],
+                                                        drawRect,
+                                                        0,
+                                                        0,
+                                                        _cellSize.Width,
+                                                        _cellSize.Height,
+                                                        GraphicsUnit.Pixel,
+                                                        GetTransparentAttributes(1.0f - bombGem.NormalizedTimer));
+                                }
+                                else
+                                    _graphics.DrawImage(_bombTextures[cell.Gem.ColorID], drawRect);
+
                                 break;
                             case LineGem lineGem:
                                 _graphics.DrawImage(_gemsTextures[cell.Gem.ColorID], drawRect);
@@ -216,6 +232,17 @@ namespace Match3
                     }
                 }
             }
+        }
+
+        private ImageAttributes GetTransparentAttributes(float opacity)
+        {
+            ColorMatrix matrix = new ColorMatrix();
+            matrix.Matrix33 = opacity;
+ 
+            ImageAttributes attributes = new ImageAttributes();
+            attributes.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
+
+            return attributes;
         }
     }
 }

@@ -2,14 +2,14 @@
 {
     public class BombGem : Gem
     {
-        private readonly int _explosionRadius;
+        public readonly int ExplosionRadius;
 
         private float _timer;
         private float _deltaT;
 
         public BombGem(int colorID, int explosionRadius, float deltaT) : base(colorID)
         {
-            _explosionRadius = explosionRadius;
+            ExplosionRadius = explosionRadius;
             _timer = 0.0f;
             _deltaT = deltaT;
         }
@@ -17,7 +17,9 @@
         public BombGem(IReadOnlyGem gem, int explosionRadius, float deltaT)
             : this(gem.ColorID, explosionRadius, deltaT) { }
 
-        public override BombGem Clone() => new BombGem(ColorID, _explosionRadius, _deltaT);
+        public float NormalizedTimer => _timer / ExplosionRadius;
+
+        public override BombGem Clone() => new BombGem(ColorID, ExplosionRadius, _deltaT);
 
         public override void Activate()
         {
@@ -30,7 +32,7 @@
                 return;
 
             _timer += _deltaT;
-            if (_timer >= _explosionRadius)
+            if (_timer >= ExplosionRadius)
                 _state = GemState.ReadyToDestroy;
         }
     }

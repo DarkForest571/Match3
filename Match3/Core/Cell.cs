@@ -55,13 +55,18 @@ namespace Match3.Core
             (_gem, cell._gem) = (cell._gem, _gem);
         }
 
-        public void ActivateGem(Gem? newGem)
+        public void ActivateGem(Gem? newGem = null)
         {
             if (_gem is null)
                 return;
             _newGem = newGem;
             _gem.Activate();
             _isStatic = true;
+        }
+
+        public void Update()
+        {
+            _gem?.Update();
         }
 
         public void DestroyGem()

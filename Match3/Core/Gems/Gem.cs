@@ -11,7 +11,7 @@
     {
         public int ColorID {  get; }
 
-        public bool ReadyToDestroy { get; }
+        public GemState State { get; }
 
         public bool Equals(IReadOnlyGem? second) => second is not null && ColorID == second.ColorID;
     }
@@ -29,7 +29,7 @@
 
         public int ColorID => _colorID;
 
-        public bool ReadyToDestroy => _state == GemState.ReadyToDestroy;
+        public GemState State => _state;
 
         public virtual Gem Clone() => new Gem(_colorID);
 
