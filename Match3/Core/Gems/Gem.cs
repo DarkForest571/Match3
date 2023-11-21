@@ -35,7 +35,7 @@
         {
             _state = GemState.Active;
         }
-        public virtual void Update()
+        public virtual void Update(int frame)
         {
             if (_state == GemState.Active)
                 _state = GemState.Expired;

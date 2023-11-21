@@ -1,5 +1,6 @@
 ﻿using Match3.Core.Gems;
 using Match3.Utils;
+using System.Diagnostics.Metrics;
 
 namespace Match3.Core
 {
@@ -9,10 +10,12 @@ namespace Match3.Core
 
         private Vector2? _selectedCell;
 
+        private int _counter;
+
         public Game(int xSize, int ySize, int physicalFrames)
         {
             float timePerFrame = 1f / physicalFrames;
-            _map = new Map(xSize, ySize, timePerFrame, timePerFrame * 5);
+            _map = new Map(xSize, ySize, timePerFrame, physicalFrames / 4);
 
             _map.SetListOfGems([
                 new Gem(0), // Red
@@ -21,6 +24,8 @@ namespace Match3.Core
                 new Gem(3), // Yellow
                 new Gem(4)  // Orange
             ]);
+
+            _counter = 0;
 
             _selectedCell = null;
         }
@@ -39,12 +44,12 @@ namespace Match3.Core
 
         public void Update()
         {
-            _map.Update();
+            _map.Update(_counter++);
         }
 
         public void SelectCell(int x, int y)
         {
-            if (_map.SwapInProgress ||
+            if (_map.SwapInProgress(_counter) ||
                 !_map.InBounds(x, y) ||
                 _map.CellAt(x, y) is null ||
                 _map.CellAt(x, y).GemIsFalling)
@@ -53,7 +58,7 @@ namespace Match3.Core
                 return;
             }
 
-            Vector2 newPosition = new (x, y);
+            Vector2 newPosition = new(x, y);
             if (_selectedCell == null)
             {
                 _selectedCell = newPosition;
@@ -62,7 +67,7 @@ namespace Match3.Core
             {
                 if (_selectedCell.Value.IsNeighbor(new(x, y)))
                 {
-                    _map.SwapGems(_selectedCell.Value, newPosition);
+                    _map.SwapGems(_selectedCell.Value, newPosition, _counter);
                 }
                 ResetCellSelection();
             }

@@ -9,7 +9,7 @@ namespace Match3.Core
 
         public IReadOnlyCell CellAt(int x, int y);
 
-        public bool SwapInProgress { get; }
+        public bool SwapInProgress(int frame);
     }
 
     public class Map : IReadOnlyMap
@@ -26,7 +26,7 @@ namespace Match3.Core
 
         private CellSwapper _cellSwapper;
 
-        public Map(int x, int y, float gravity, float swapSpeed)
+        public Map(int x, int y, float gravity, int framesForSwap)
         {
             _gravity = gravity;
             _xSize = x;
@@ -34,16 +34,16 @@ namespace Match3.Core
             _cellMatrix = new Cell[x, y];
             _spawnCell = new Cell[x];
             _gems = new List<Gem>();
-            _cellSwapper = new CellSwapper(swapSpeed);
+            _cellSwapper = new CellSwapper(framesForSwap);
         }
 
-        public Map(Vector2 size, float gravity, float swapSpeed) : this(size.X, size.Y, gravity, swapSpeed) { }
+        public Map(Vector2 size, float gravity, int framesForSwap) : this(size.X, size.Y, gravity, framesForSwap) { }
 
         public Vector2 Size => new Vector2(_xSize, _ySize);
 
         public IReadOnlyCell CellAt(int x, int y) => _cellMatrix[x, y];
 
-        public bool SwapInProgress => _cellSwapper.State != SwapperState.Idle;
+        public bool SwapInProgress(int frame) => _cellSwapper.SwapInProgress(frame);
 
         public virtual void InitMap()
         {
@@ -81,21 +81,17 @@ namespace Match3.Core
             _gems = gems;
         }
 
-        public void Update()
+        public void Update(int frame)
         {
             ApplyGravity();
             SpawnGems();
 
-            _cellSwapper.Update();
-            if (_cellSwapper.State == SwapperState.Ready)
+            if (_cellSwapper.Update(frame))
             {
                 bool first = CheckRowAt(_cellSwapper.FirstPosition);
                 bool second = CheckRowAt(_cellSwapper.SecondPosition);
 
-                if (first || second)
-                    _cellSwapper.Finish();
-                else
-                    _cellSwapper.SetReverse();
+                _cellSwapper.Finish(first || second, frame);
 
                 if (first)
                     ActivateRowAt(_cellSwapper.FirstPosition);
@@ -103,26 +99,27 @@ namespace Match3.Core
                     ActivateRowAt(_cellSwapper.SecondPosition);
             }
 
-            UpdateAllCells();
+            UpdateAllCells(frame);
 
             DestroyExpiredGems();
         }
 
-        public void SwapGems(Vector2 first, Vector2 second)
+        public void SwapGems(Vector2 first, Vector2 second, int frame)
         {
             _cellSwapper.InitSwap(_cellMatrix[first.X, first.Y],
                                  _cellMatrix[second.X, second.Y],
                                  first,
-                                 second);
+                                 second,
+                                 frame);
         }
 
-        public void UpdateAllCells()
+        public void UpdateAllCells(int frame)
         {
             for (int y = 0; y < _xSize; ++y)
             {
                 for (int x = 0; x < _xSize; ++x)
                 {
-                    _cellMatrix[x, y].UpdateGem();
+                    _cellMatrix[x, y].UpdateGem(frame);
                 }
             }
         }

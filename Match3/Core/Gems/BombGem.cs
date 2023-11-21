@@ -26,7 +26,7 @@
             _state = GemState.Active;
         }
 
-        public override void Update()
+        public override void Update(int frame)
         {
             if (_state != GemState.Active)
                 return;

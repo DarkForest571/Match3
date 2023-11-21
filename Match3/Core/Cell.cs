@@ -70,9 +70,9 @@ namespace Match3.Core
             _gem.Activate();
         }
 
-        public void UpdateGem()
+        public void UpdateGem(int frame)
         {
-            _gem?.Update();
+            _gem?.Update(frame);
         }
 
         public void DestroyGem()
@@ -133,17 +133,23 @@ namespace Match3.Core
             _isFalling = true;
         }
 
-        public void ResetOffset()
-        {
-            _xOffset = 0.0f;
-            _yOffset = 0.0f;
-        }
-
         public void ResetVelocity()
         {
             _xVelocity = 0.0f;
             _yVelocity = 0.0f;
             _isFalling = false;
+        }
+
+        public void SetOffset(float x, float y) // TODO Try without it
+        {
+            _xOffset = x;
+            _yOffset = y;
+        }
+
+        public void ResetOffset()
+        {
+            _xOffset = 0.0f;
+            _yOffset = 0.0f;
         }
     }
 }

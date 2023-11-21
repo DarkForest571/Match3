@@ -14,7 +14,7 @@
             (X, Y) = (point.X, point.Y);
         }
 
-        public bool IsNeighbor(Vector2 vector)
+        public readonly bool IsNeighbor(Vector2 vector)
         {
             Vector2 delta = this - vector;
             if (delta == Up || delta == Down || delta == Left || delta == Right)
@@ -22,13 +22,13 @@
             return false;
         }
 
-        private static Vector2 _zero = new Vector2(0, 0);
-        private static Vector2 _one = new Vector2(1, 1);
+        private static Vector2 _zero = new (0, 0);
+        private static Vector2 _one = new (1, 1);
 
-        private static Vector2 _up = new Vector2(0, -1);
-        private static Vector2 _down = new Vector2(0, 1);
-        private static Vector2 _left = new Vector2(-1, 0);
-        private static Vector2 _right = new Vector2(1, 0);
+        private static Vector2 _up = new (0, -1);
+        private static Vector2 _down = new (0, 1);
+        private static Vector2 _left = new (-1, 0);
+        private static Vector2 _right = new (1, 0);
 
         public static Vector2 Zero => _zero;
         public static Vector2 One => _one;
@@ -39,6 +39,8 @@
         public static Vector2 Right => _right;
 
         public static Vector2[] AllDirections => new Vector2[] { Up, Down, Left, Right };
+
+        public static Vector2 operator -(Vector2 vector) => new(-vector.X, -vector.Y);
 
         public static bool operator <(Vector2 left, Vector2 right) => left.X < right.X && left.Y < right.Y;
 
@@ -82,7 +84,7 @@
                 Direction.Down => Down,
                 Direction.Left => Left,
                 Direction.None => Zero,
-                _ => throw new ArgumentException()
+                _ => throw new NotImplementedException()
             };
 
         public void Deconstruct(out int X, out int Y)

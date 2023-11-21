@@ -2,84 +2,84 @@
 
 namespace Match3.Core
 {
-    public enum SwapperState
-    {
-        Idle,
-        Swapping,
-        Ready,
-        ReverseSwapping
-    }
-
     public class CellSwapper
     {
         private Cell _firstCell;
         private Cell _secondCell;
         private Vector2 _firstPosition;
         private Vector2 _secondPosition;
-        private float _deltaX;
-        private float _deltaY;
-        private float _tParam;
-        private readonly float _tParamDelta;
+        private Vector2 _delta;
 
-        private SwapperState _state;
+        private int _startFrame;
+        private int _endFrame;
+        private readonly int _framesForSwap;
 
-        public CellSwapper(float tParamDelta)
+        private bool _isReverseSwapping;
+
+        public CellSwapper(int framesForSwap)
         {
-            _tParamDelta = tParamDelta;
-            _state = SwapperState.Idle;
+            _framesForSwap = framesForSwap;
+            _isReverseSwapping = false;
+            _startFrame = -1;
         }
 
         public Vector2 FirstPosition => _firstPosition;
         public Vector2 SecondPosition => _secondPosition;
 
-        public SwapperState State => _state;
+        private bool IsActive => _startFrame != -1;
 
-        public void InitSwap(Cell first, Cell second, Vector2 firstPosition, Vector2 secondPosition)
+        private void StopSwapper() => _startFrame = -1;
+
+        public void InitSwap(Cell first, Cell second, Vector2 firstPosition, Vector2 secondPosition, int frame)
         {
             (_firstCell, _secondCell) = (first, second);
             (_firstPosition, _secondPosition) = (firstPosition, secondPosition);
-            Vector2 delta = secondPosition - firstPosition;
-            (_deltaX, _deltaY) = (delta.X, delta.Y);
-            _tParam = 0.0f;
-            _state = SwapperState.Swapping;
+            _delta = secondPosition - firstPosition;
+            _startFrame = frame;
+            _endFrame = frame + _framesForSwap;
+            _isReverseSwapping = false;
         }
 
-        public void SetReverse()
+        public bool SwapInProgress(int frame) => frame < _endFrame;
+
+        public void Finish(bool makeRow, int frame)
         {
-            _state = SwapperState.ReverseSwapping;
+            if (_isReverseSwapping = !makeRow)
+            {
+                (_firstCell, _secondCell) = (_secondCell, _firstCell);
+                _delta = -_delta;
+                _startFrame = frame;
+                _endFrame = _startFrame + _framesForSwap;
+            }
+            else
+                StopSwapper();
         }
 
-        public void Finish()
+        public bool Update(int frame)
         {
-            _state = SwapperState.Idle;
-        }
+            if (!IsActive)
+                return false;
 
-        public void Update()
-        {
-            if (_state == SwapperState.Idle)
-                return;
+            float tParam = (frame - _startFrame) / (float)_framesForSwap;
+            float slerp = (float)(-Math.Cos(tParam * Math.PI) + 1.0) / 2;
+            float dX = _delta.X * slerp;
+            float dY = _delta.Y * slerp;
+            _firstCell.SetOffset(dX, dY);
+            _secondCell.SetOffset(-dX, -dY);
 
-            _tParam += _tParamDelta;
-            float slerp = (float)Math.Sin(_tParam * Math.PI);
-
-            //_firstCell.SetOffset(_deltaX * slerp, _deltaY * slerp);
-            //_secondCell.SetOffset(-_deltaX * slerp, -_deltaY * slerp);
-
-            if (_tParam >= 1.0f)
+            if (!SwapInProgress(frame))
             {
                 _firstCell.SwapGems(_secondCell);
+                //_firstCell.ResetVelocity();
+                //_secondCell.ResetVelocity();
                 _firstCell.ResetOffset();
                 _secondCell.ResetOffset();
 
-                (_firstCell, _secondCell) = (_secondCell, _firstCell);
-                (_deltaX, _deltaY) = (-_deltaX, -_deltaY);
-                _tParam = 0.0f;
-
-                if (_state == SwapperState.Swapping)
-                    _state = SwapperState.Ready;
-                else
-                    _state = SwapperState.Idle;
+                if (_isReverseSwapping)
+                    StopSwapper();
+                return !_isReverseSwapping;
             }
+            return false;
         }
     }
 }
