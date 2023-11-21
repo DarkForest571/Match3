@@ -4,6 +4,10 @@
     {
         public int ColorID { get; }
 
+        public bool IsActive { get; }
+
+        public bool IsExpired(int frame);
+
         public bool Equals(IReadOnlyGem? second) => second is not null && ColorID == second.ColorID;
     }
 

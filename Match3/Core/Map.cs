@@ -262,20 +262,20 @@ namespace Match3.Core
                     if (_cellMatrix[x, y].IsExpiredGem(frame))
                     {
                         IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
-                        _cellMatrix[x, y].DestroyGem();
                         if (gem is BombGem)
                         {
                             BombGem bombGem = (BombGem)gem;
                             Vector2 delta = new Vector2(bombGem.ExplosionRadius, bombGem.ExplosionRadius);
                             ActivateArea(new Vector2(x, y) - delta, new Vector2(x, y) + delta, frame);
                         }
+                        _cellMatrix[x, y].DestroyGem();
                     }
                 }
             }
         }
 
         private void ActivateArea(Vector2 upperLeft, Vector2 bottomRight, int frame)
-        {
+        { // TODO Bug Bomb spawn other bonus, that is die immediately
             if (upperLeft > bottomRight)
                 throw new InvalidOperationException();
 
@@ -303,7 +303,7 @@ namespace Match3.Core
         private void ApplyGravityToCell(int x, int y, int frame)
         {
             Cell cell = _cellMatrix[x, y];
-            if (cell.Gem is null)
+            if (cell.Gem is null || cell.Gem.IsActive)
                 return;
 
             int bottomX = y + 1;

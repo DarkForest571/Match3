@@ -18,7 +18,7 @@
 
         public int ExplosionRadius => _explosionRadius;
 
-        public float NormalizedTimer => (_endFrame - _lastFrame) / (float)_framesBeforeExpired;
+        public float NormalizedTimer => (_lastFrame - _startFrame) / (float)_framesBeforeExpired;
 
         public override BombGem Clone() => new BombGem(ColorID, _explosionRadius, _framesBeforeExpired);
 
