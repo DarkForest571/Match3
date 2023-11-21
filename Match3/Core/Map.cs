@@ -121,25 +121,24 @@ namespace Match3.Core
             if (gem is null)
                 return false;
 
-            Vector2[] directionsAndDeltas =
-            {
-                Vector2.Up,
-                Vector2.Down,
-                Vector2.Left,
-                Vector2.Right
-            };
-            Vector2 position = new Vector2(x, y);
+            Vector2 rowSize = RowSizeAt(x, y, checkDynamic);
+
+            return rowSize.X >= 3 || rowSize.Y >= 3;
+        }
+
+        private Vector2 RowSizeAt(int x, int y, bool checkDynamic = false)
+        {
             Vector2 rowSize = Vector2.One;
 
-            foreach (var delta in directionsAndDeltas)
+            foreach (var delta in Vector2.AllDirections)
             {
-                Vector2 observer = position;
+                Vector2 observer = new Vector2(x, y);
 
                 for (int i = 0; i < 2; ++i)
                 {
                     observer += delta;
                     if (InBounds(observer) &&
-                        _cellMatrix[observer.X, observer.Y].Gem == gem &&
+                        _cellMatrix[observer.X, observer.Y].Gem == _cellMatrix[x, y].Gem &&
                         (_cellMatrix[observer.X, observer.Y].IsStatic || checkDynamic))
                     {
                         if (delta.X != 0)
@@ -151,8 +150,7 @@ namespace Match3.Core
                         break;
                 }
             }
-
-            return rowSize.X >= 3 || rowSize.Y >= 3;
+            return rowSize;
         }
 
         public void BreakRowAt(Vector2 position) =>
@@ -164,18 +162,14 @@ namespace Match3.Core
             if (gem is null)
                 throw new InvalidOperationException();
 
-            Vector2[] directionsAndDeltas =
-            {
-                Vector2.Up,
-                Vector2.Down,
-                Vector2.Left,
-                Vector2.Right
-            };
-            Vector2 position = new Vector2(x, y);
+            Vector2 rowSize = RowSizeAt(x, y);
 
-            foreach (var delta in directionsAndDeltas)
+            foreach (var delta in Vector2.AllDirections)
             {
-                Vector2 observer = position;
+                if (rowSize.X < 3 && delta.X != 0 ||
+                    rowSize.Y < 3 && delta.Y != 0)
+                    continue;
+                Vector2 observer = new Vector2(x,y);
 
                 for (int i = 0; i < 2; ++i)
                 {
