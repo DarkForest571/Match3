@@ -159,7 +159,7 @@ namespace Match3.Core
                     observer += delta;
                     if (InBounds(observer) &&
                         gem.Equals(_cellMatrix[observer.X, observer.Y].Gem) &&
-                        (_cellMatrix[observer.X, observer.Y].IsStatic || checkDynamic))
+                        (_cellMatrix[observer.X, observer.Y].IsIdle || checkDynamic))
                     {
                         if (delta.X != 0)
                             rowSize.X++;
@@ -195,7 +195,7 @@ namespace Match3.Core
                 {
                     observer += delta;
                     if (InBounds(observer) &&
-                        _cellMatrix[observer.X, observer.Y].IsStatic &&
+                        _cellMatrix[observer.X, observer.Y].IsIdle &&
                         gem.Equals(_cellMatrix[observer.X, observer.Y].Gem))
                     {
                         _cellMatrix[observer.X, observer.Y].ActivateGem();
@@ -243,9 +243,9 @@ namespace Match3.Core
             {
                 for (int x = _xSize - 1; x >= 0; --x)
                 {
-                    IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
-                    if (gem is not null && gem.State == GemState.ReadyToDestroy)
+                    if (_cellMatrix[x, y].IsExpiredGem)
                     {
+                        IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
                         _cellMatrix[x, y].DestroyGem();
                         if (gem is BombGem)
                         {
@@ -287,24 +287,23 @@ namespace Match3.Core
         private bool ApplyGravityToCell(int xPosition, int yPosition)
         {
             Cell cell = _cellMatrix[xPosition, yPosition];
-            if (cell.Gem is null || cell.Gem.State != GemState.Idle)
+            if (cell.Gem is null)
                 return true;
 
             cell.ApplyGravity(_gravity);
             cell.ApplyFallVelocity();
 
             int bottomCellY = yPosition + 1;
-            if (bottomCellY == _ySize ||
-                _cellMatrix[xPosition, bottomCellY].IsStatic ||
-                _cellMatrix[xPosition, bottomCellY].Gem?.State == GemState.Idle)
+            if (bottomCellY == _ySize || _cellMatrix[xPosition, bottomCellY].IsIdle)
             {
                 if (cell.YOffset >= 0.0f)
                 {
-                    cell.SetStatic();
+                    cell.ResetOffset();
+                    cell.ResetVelocity();
                     if (CheckRowAt(xPosition, yPosition))
                         ActivateRowAt(xPosition, yPosition);
                 }
-                return cell.IsStatic;
+                return cell.IsIdle;
             }
 
             if (cell.YOffset > 0.5f)
@@ -317,7 +316,7 @@ namespace Match3.Core
                 else
                     throw new InvalidOperationException();
             }
-            return cell.IsStatic;
+            return cell.IsIdle;
         }
 
         public bool InBounds(int x, int y) =>

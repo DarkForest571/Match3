@@ -51,7 +51,7 @@ namespace Match3.Core
             if (_map.SwapInProgress ||
                 !_map.InBounds(x, y) ||
                 _map.CellAt(x, y) is null ||
-                !_map.CellAt(x, y).IsStatic)
+                !_map.CellAt(x, y).IsIdle)
             {
                 ResetCellSelection();
                 return;

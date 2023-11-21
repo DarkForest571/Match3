@@ -3,15 +3,14 @@
     public enum GemState
     {
         Idle,
+        Falling,
         Active,
-        ReadyToDestroy
+        Expired
     }
 
     public interface IReadOnlyGem
     {
-        public int ColorID {  get; }
-
-        public GemState State { get; }
+        public int ColorID { get; }
 
         public bool Equals(IReadOnlyGem? second) => second is not null && ColorID == second.ColorID;
     }
@@ -35,8 +34,12 @@
 
         public virtual void Activate()
         {
-            _state = GemState.ReadyToDestroy;
+            _state = GemState.Active;
         }
-        public virtual void Update() { }
+        public virtual void Update()
+        {
+            if (_state == GemState.Active)
+                _state = GemState.Expired;
+        }
     }
 }

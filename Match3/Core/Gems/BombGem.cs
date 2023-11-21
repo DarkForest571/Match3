@@ -33,7 +33,7 @@
 
             _timer += _deltaT;
             if (_timer >= ExplosionRadius)
-                _state = GemState.ReadyToDestroy;
+                _state = GemState.Expired;
         }
     }
 }

@@ -68,8 +68,8 @@ namespace Match3.Core
             if (_tParam >= 1.0f)
             {
                 _firstCell.SwapGems(_secondCell);
-                _firstCell.SetStatic();
-                _secondCell.SetStatic();
+                _firstCell.ResetOffset();
+                _secondCell.ResetOffset();
 
                 (_firstCell, _secondCell) = (_secondCell, _firstCell);
                 (_deltaX, _deltaY) = (-_deltaX, -_deltaY);
