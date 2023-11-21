@@ -123,7 +123,7 @@ namespace Match3
                     {
                         drawRect.Location = new((int)((x + cell.XOffset) * _cellSize.Width) + _gridOffset.X,
                             (int)((y + cell.YOffset) * _cellSize.Height) + _gridOffset.Y);
-                        _graphics.DrawImage(_gemsTextures[cell.Gem.ID], drawRect);
+                        _graphics.DrawImage(_gemsTextures[cell.Gem.ColorID], drawRect);
                     }
                 }
             }

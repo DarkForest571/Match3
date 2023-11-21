@@ -1,4 +1,5 @@
-﻿using Match3.Utils;
+﻿using Match3.Core.Gems;
+using Match3.Utils;
 
 namespace Match3.Core
 {
@@ -69,7 +70,7 @@ namespace Match3.Core
                     do
                     {
                         choice = Random.Shared.Next(_gems.Count);
-                        _cellMatrix[x, y].SpawnGem(_gems[choice]);
+                        _cellMatrix[x, y].SpawnGem(_gems[choice].Clone());
                     } while (CheckRowAt(x, y, true));
                 }
             }
@@ -84,24 +85,27 @@ namespace Match3.Core
         {
             ApplyGravity();
             SpawnGems();
+
             _cellSwapper.Update();
             if (_cellSwapper.State == SwapperState.Ready)
             {
                 if (CheckRowAt(_cellSwapper.FirstPosition))
                 {
                     _cellSwapper.Finish();
-                    BreakRowAt(_cellSwapper.FirstPosition);
+                    ActivateRowAt(_cellSwapper.FirstPosition);
                 }
                 else if (CheckRowAt(_cellSwapper.SecondPosition))
                 {
                     _cellSwapper.Finish();
-                    BreakRowAt(_cellSwapper.SecondPosition);
+                    ActivateRowAt(_cellSwapper.SecondPosition);
                 }
                 else
                 {
                     _cellSwapper.SetReverse();
                 }
             }
+
+            TryDestroyGems();
         }
 
         public void SwapGems(Vector2 first, Vector2 second)
@@ -112,12 +116,13 @@ namespace Match3.Core
                                  second);
         }
 
+        #region Check and activate combo
         public bool CheckRowAt(Vector2 position, bool checkDynamic = false) =>
             CheckRowAt(position.X, position.Y, checkDynamic);
 
         public bool CheckRowAt(int x, int y, bool checkDynamic = false)
         {
-            Gem? gem = _cellMatrix[x, y].Gem;
+            IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
             if (gem is null)
                 return false;
 
@@ -128,6 +133,9 @@ namespace Match3.Core
 
         private Vector2 RowSizeAt(int x, int y, bool checkDynamic = false)
         {
+            IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
+            if (gem is null)
+                throw new InvalidOperationException();
             Vector2 rowSize = Vector2.One;
 
             foreach (var delta in Vector2.AllDirections)
@@ -138,7 +146,7 @@ namespace Match3.Core
                 {
                     observer += delta;
                     if (InBounds(observer) &&
-                        _cellMatrix[observer.X, observer.Y].Gem == _cellMatrix[x, y].Gem &&
+                        gem.Equals(_cellMatrix[observer.X, observer.Y].Gem) &&
                         (_cellMatrix[observer.X, observer.Y].IsStatic || checkDynamic))
                     {
                         if (delta.X != 0)
@@ -153,12 +161,12 @@ namespace Match3.Core
             return rowSize;
         }
 
-        public void BreakRowAt(Vector2 position) =>
-            BreakRowAt(position.X, position.Y);
+        public void ActivateRowAt(Vector2 position) =>
+            ActivateRowAt(position.X, position.Y);
 
-        public void BreakRowAt(int x, int y)
+        public void ActivateRowAt(int x, int y)
         {
-            Gem? gem = _cellMatrix[x, y].Gem;
+            IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
             if (gem is null)
                 throw new InvalidOperationException();
 
@@ -175,20 +183,21 @@ namespace Match3.Core
                 {
                     observer += delta;
                     if (InBounds(observer) &&
-                        _cellMatrix[observer.X, observer.Y].Gem == gem)
+                        gem.Equals(_cellMatrix[observer.X, observer.Y].Gem))
                     {
-                        _cellMatrix[observer.X, observer.Y].ClearGem();
+                        _cellMatrix[observer.X, observer.Y].ActivateGem();
                     }
                     else
                         break;
                 }
             }
-            _cellMatrix[x, y].ClearGem();
+            _cellMatrix[x, y].ActivateGem();
         }
 
-        private bool SpawnGems()
+        #endregion
+
+        private void SpawnGems()
         {
-            bool isStatic = true;
             for (int x = 0; x < _xSize; ++x)
             {
                 if (_spawnCell[x].Gem is null)
@@ -198,24 +207,33 @@ namespace Match3.Core
                     {
                         choice = Random.Shared.Next(_gems.Count);
                         _spawnCell[x].SpawnGem(_gems[choice]);
-                        isStatic = false;
                     } while (CheckRowAt(x, 0));
                 }
             }
-            return isStatic;
         }
 
-        private bool ApplyGravity()
+        public void TryDestroyGems()
         {
-            bool isStatic = false;
             for (int y = _xSize - 1; y >= 0; --y)
             {
                 for (int x = _xSize - 1; x >= 0; --x)
                 {
-                    isStatic &= ApplyGravityToCell(x, y);
+                    IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
+                    if (gem is not null && gem.ReadyToDestroy)
+                        _cellMatrix[x, y].DestroyGem();
                 }
             }
-            return isStatic;
+        }
+
+        private void ApplyGravity()
+        {
+            for (int y = _xSize - 1; y >= 0; --y)
+            {
+                for (int x = _xSize - 1; x >= 0; --x)
+                {
+                    ApplyGravityToCell(x, y);
+                }
+            }
         }
 
         private bool ApplyGravityToCell(int xPosition, int yPosition)
@@ -234,7 +252,7 @@ namespace Match3.Core
                 {
                     cell.SetStatic();
                     if (CheckRowAt(xPosition, yPosition))
-                        BreakRowAt(xPosition, yPosition);
+                        ActivateRowAt(xPosition, yPosition);
                 }
                 return cell.IsStatic;
             }
@@ -249,8 +267,6 @@ namespace Match3.Core
                 else
                     throw new InvalidOperationException();
             }
-
-
             return cell.IsStatic;
         }
 

@@ -1,4 +1,5 @@
-﻿using Match3.Utils;
+﻿using Match3.Core.Gems;
+using Match3.Utils;
 
 namespace Match3.Core
 {
@@ -8,7 +9,7 @@ namespace Match3.Core
 
         public float XOffset { get; }
 
-        public Gem? Gem { get; }
+        public IReadOnlyGem? Gem { get; }
 
         public bool IsStatic { get; }
     }
@@ -35,7 +36,7 @@ namespace Match3.Core
 
         public float YOffset => _yOffset;
 
-        public Gem? Gem => _gem;
+        public IReadOnlyGem? Gem => _gem;
 
         public bool IsStatic => _isStatic;
 
@@ -53,7 +54,13 @@ namespace Match3.Core
             (_gem, cell._gem) = (cell._gem, _gem);
         }
 
-        public void ClearGem()
+        public void ActivateGem()
+        {
+            if (_gem is not null)
+                _gem.Activate();
+        }
+
+        public void DestroyGem()
         {
             _gem = null;
             _isStatic = false;

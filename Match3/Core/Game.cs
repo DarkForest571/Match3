@@ -1,4 +1,5 @@
-﻿using Match3.Utils;
+﻿using Match3.Core.Gems;
+using Match3.Utils;
 
 namespace Match3.Core
 {
@@ -7,12 +8,6 @@ namespace Match3.Core
         private int _xSize;
         private int _ySize;
         private Map _map;
-
-        private Gem _red;
-        private Gem _green;
-        private Gem _blue;
-        private Gem _yellow;
-        private Gem _orange;
 
         private Vector2? _selectedCell;
 
@@ -23,11 +18,13 @@ namespace Match3.Core
             float timePerFrame = 1f / physicalFrames;
             _map = new Map(_xSize, _ySize, timePerFrame, timePerFrame * 5);
 
-            _red = new Gem(0);
-            _green = new Gem(1);
-            _blue = new Gem(2);
-            _yellow = new Gem(3);
-            _orange = new Gem(4);
+            _map.SetListOfGems([
+                new Gem(0), // Red
+                new Gem(1), // Green
+                new Gem(2), // Blue
+                new Gem(3), // Yellow
+                new Gem(4)  // Orange
+            ]);
 
             _selectedCell = null;
         }
@@ -40,13 +37,7 @@ namespace Match3.Core
         {
             ResetCellSelection();
             _map.InitMap();
-            _map.SetListOfGems(new List<Gem>{
-                _red,
-                _green,
-                _blue,
-                _yellow,
-                _orange
-            });
+
             _map.InitGems();
         }
 
