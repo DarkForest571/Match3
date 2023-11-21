@@ -193,7 +193,7 @@ namespace Match3
                         switch (cell.Gem)
                         {
                             case BombGem bombGem:
-                                if (bombGem.State == GemState.Active)
+                                if (bombGem.IsActive)
                                 {
                                     _graphics.DrawImage(_bombTextures[cell.Gem.ColorID],
                                                         drawRect,

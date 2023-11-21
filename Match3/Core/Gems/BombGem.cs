@@ -2,38 +2,32 @@
 {
     public class BombGem : Gem
     {
-        public readonly int ExplosionRadius;
+        private readonly int _explosionRadius;
 
-        private float _timer;
-        private float _deltaT;
+        private int _lastFrame;
 
-        public BombGem(int colorID, int explosionRadius, float deltaT) : base(colorID)
+        public BombGem(int colorID,
+                       int explosionRadius,
+                       int framesBeforeExpired) : base(colorID, framesBeforeExpired)
         {
-            ExplosionRadius = explosionRadius;
-            _timer = 0.0f;
-            _deltaT = deltaT;
+            _explosionRadius = explosionRadius;
         }
 
-        public BombGem(IReadOnlyGem gem, int explosionRadius, float deltaT)
-            : this(gem.ColorID, explosionRadius, deltaT) { }
+        public BombGem(IReadOnlyGem gem, int explosionRadius, int framesBeforeExpired)
+            : this(gem.ColorID, explosionRadius, framesBeforeExpired) { }
 
-        public float NormalizedTimer => _timer / ExplosionRadius;
+        public int ExplosionRadius => _explosionRadius;
 
-        public override BombGem Clone() => new BombGem(ColorID, ExplosionRadius, _deltaT);
+        public float NormalizedTimer => (_endFrame - _lastFrame) / (float)_framesBeforeExpired;
 
-        public override void Activate()
-        {
-            _state = GemState.Active;
-        }
+        public override BombGem Clone() => new BombGem(ColorID, _explosionRadius, _framesBeforeExpired);
 
         public override void Update(int frame)
         {
-            if (_state != GemState.Active)
+            if (!IsActive)
                 return;
 
-            _timer += _deltaT;
-            if (_timer >= ExplosionRadius)
-                _state = GemState.Expired;
+            _lastFrame = frame;
         }
     }
 }

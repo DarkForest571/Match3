@@ -43,7 +43,7 @@ namespace Match3.Core
 
         public bool GemIsFalling => _gem == null || _isFalling;
 
-        public bool IsExpiredGem => _gem != null && _gem.State == GemState.Expired;
+        public bool IsExpiredGem(int frame) => _gem != null && _gem.IsExpired(frame);
 
         public void SpawnGem(Gem gem)
         {
@@ -62,12 +62,12 @@ namespace Match3.Core
             (_newGem, cell._newGem) = (cell._newGem, _newGem);
         }
 
-        public void ActivateGem(Gem? newGem = null)
+        public void ActivateGem(int frame, Gem? newGem = null)
         {
             if (_gem is null)
                 return;
             _newGem = newGem;
-            _gem.Activate();
+            _gem.Activate(frame);
         }
 
         public void UpdateGem(int frame)

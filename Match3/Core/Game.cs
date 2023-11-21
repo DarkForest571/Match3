@@ -15,14 +15,18 @@ namespace Match3.Core
         public Game(int xSize, int ySize, int physicalFrames)
         {
             float timePerFrame = 1f / physicalFrames;
-            _map = new Map(xSize, ySize, timePerFrame, physicalFrames / 4);
+            int framesForSwap = physicalFrames / 4;
+            int framesForBomb = physicalFrames / 4;
+            int framesForLine = physicalFrames / 10;
+            _map = new Map(xSize, ySize, timePerFrame, framesForSwap, framesForBomb, framesForLine);
 
+            int gemExpireFrames = physicalFrames / 10;
             _map.SetListOfGems([
-                new Gem(0), // Red
-                new Gem(1), // Green
-                new Gem(2), // Blue
-                new Gem(3), // Yellow
-                new Gem(4)  // Orange
+                new Gem(0, gemExpireFrames), // Red
+                new Gem(1, gemExpireFrames), // Green
+                new Gem(2, gemExpireFrames), // Blue
+                new Gem(3, gemExpireFrames), // Yellow
+                new Gem(4, gemExpireFrames)  // Orange
             ]);
 
             _counter = 0;

@@ -26,7 +26,7 @@ namespace Match3.Core
         public Vector2 FirstPosition => _firstPosition;
         public Vector2 SecondPosition => _secondPosition;
 
-        private bool IsActive => _startFrame != -1;
+        private bool IsActive => _startFrame > -1;
 
         private void StopSwapper() => _startFrame = -1;
 

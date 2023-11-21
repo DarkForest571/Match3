@@ -1,12 +1,5 @@
 ﻿namespace Match3.Core.Gems
 {
-    public enum GemState
-    {
-        Idle,
-        Active,
-        Expired
-    }
-
     public interface IReadOnlyGem
     {
         public int ColorID { get; }
@@ -17,28 +10,31 @@
     public class Gem : IReadOnlyGem
     {
         private int _colorID;
-        protected GemState _state;
 
-        public Gem(int colorID)
+        protected int _startFrame;
+        protected int _endFrame;
+        protected readonly int _framesBeforeExpired;
+
+        public Gem(int colorID, int framesBeforeExpired)
         {
             _colorID = colorID;
-            _state = GemState.Idle;
+            _framesBeforeExpired = framesBeforeExpired;
+            _startFrame = -1;
         }
 
         public int ColorID => _colorID;
 
-        public GemState State => _state;
+        public bool IsActive => _startFrame > -1;
 
-        public virtual Gem Clone() => new Gem(_colorID);
+        public bool IsExpired(int frame) => _startFrame > 1 && frame >= _endFrame;
 
-        public virtual void Activate()
+        public virtual Gem Clone() => new Gem(_colorID, _framesBeforeExpired);
+
+        public void Activate(int frame)
         {
-            _state = GemState.Active;
+            _startFrame = frame;
+            _endFrame = frame + _framesBeforeExpired;
         }
-        public virtual void Update(int frame)
-        {
-            if (_state == GemState.Active)
-                _state = GemState.Expired;
-        }
+        public virtual void Update(int frame) { }
     }
 }

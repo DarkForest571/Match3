@@ -11,11 +11,15 @@
     {
         public readonly LineGemType Type;
 
-        public LineGem(int colorID, LineGemType type) : base(colorID)
+        public LineGem(int colorID,
+                       LineGemType type,
+                       int framesBeforeExpired) : base(colorID, framesBeforeExpired)
         {
             Type = type;
         }
 
-        public LineGem(IReadOnlyGem gem, LineGemType type) : this(gem.ColorID, type) { }
+        public LineGem(IReadOnlyGem gem,
+                       LineGemType type,
+                       int framesBeforeExpired) : this(gem.ColorID, type, framesBeforeExpired) { }
     }
 }
