@@ -69,7 +69,7 @@ namespace Match3.Core
 
             if (!SwapInProgress(frame))
             {
-                _firstCell.SwapObjects(_secondCell);
+                _firstCell.SwapGems(_secondCell);
                 //_firstCell.ResetVelocity();
                 //_secondCell.ResetVelocity();
                 _firstCell.ResetOffset();

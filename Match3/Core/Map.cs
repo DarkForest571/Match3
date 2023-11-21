@@ -56,8 +56,7 @@ namespace Match3.Core
                                              gravity,
                                              framesForSwap,
                                              framesForBomb,
-                                             framesForLine)
-        { }
+                                             framesForLine) { }
 
         public Vector2 Size => new Vector2(_xSize, _ySize);
 
@@ -169,24 +168,11 @@ namespace Match3.Core
                     if (_cellMatrix[x, y].IsExpiredGem(frame))
                     {
                         IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
-                        switch (gem)
+                        if (gem is BombGem)
                         {
-                            case BombGem bombGem: // TODO Bug: Bomb spawn other bonus, that is die immediately
-                                Vector2 delta = new Vector2(bombGem.ExplosionRadius, bombGem.ExplosionRadius);
-                                ActivateArea(new Vector2(x, y) - delta, new Vector2(x, y) + delta, frame);
-                                break;
-                            case LineGem lineGem:
-                                if(lineGem.Type == LineGemType.Vertical || lineGem.Type == LineGemType.Both)
-                                {
-
-                                }
-                                if(lineGem.Type == LineGemType.Horizontal || lineGem.Type == LineGemType.Both)
-                                {
-
-                                }
-                                break;
-                            default:
-                                break;
+                            BombGem bombGem = (BombGem)gem;
+                            Vector2 delta = new Vector2(bombGem.ExplosionRadius, bombGem.ExplosionRadius);
+                            ActivateArea(new Vector2(x, y) - delta, new Vector2(x, y) + delta, frame);
                         }
                         _cellMatrix[x, y].DestroyGem();
                     }
@@ -289,7 +275,7 @@ namespace Match3.Core
         }
 
         private void ActivateArea(Vector2 upperLeft, Vector2 bottomRight, int frame)
-        {
+        { // TODO Bug Bomb spawn other bonus, that is die immediately
             if (upperLeft > bottomRight)
                 throw new InvalidOperationException();
 
