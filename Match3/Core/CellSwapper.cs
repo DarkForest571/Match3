@@ -60,10 +60,10 @@ namespace Match3.Core
                 return;
 
             _tParam += _tParamDelta;
-            float slerp = (float)Math.Sin(_tParam * Math.PI / 2);
+            float slerp = (float)Math.Sin(_tParam * Math.PI);
 
-            _firstCell.SetOffset(_deltaX * slerp, _deltaY * slerp);
-            _secondCell.SetOffset(-_deltaX * slerp, -_deltaY * slerp);
+            //_firstCell.SetOffset(_deltaX * slerp, _deltaY * slerp);
+            //_secondCell.SetOffset(-_deltaX * slerp, -_deltaY * slerp);
 
             if (_tParam >= 1.0f)
             {

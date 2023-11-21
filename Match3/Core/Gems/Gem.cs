@@ -3,7 +3,6 @@
     public enum GemState
     {
         Idle,
-        Falling,
         Active,
         Expired
     }

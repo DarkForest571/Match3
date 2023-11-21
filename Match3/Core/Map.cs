@@ -7,7 +7,7 @@ namespace Match3.Core
     {
         public Vector2 Size { get; }
 
-        public IReadOnlyCell? CellAt(int x, int y);
+        public IReadOnlyCell CellAt(int x, int y);
 
         public bool SwapInProgress { get; }
     }
@@ -41,7 +41,7 @@ namespace Match3.Core
 
         public Vector2 Size => new Vector2(_xSize, _ySize);
 
-        public IReadOnlyCell? CellAt(int x, int y) => _cellMatrix[x, y];
+        public IReadOnlyCell CellAt(int x, int y) => _cellMatrix[x, y];
 
         public bool SwapInProgress => _cellSwapper.State != SwapperState.Idle;
 
@@ -122,7 +122,7 @@ namespace Match3.Core
             {
                 for (int x = 0; x < _xSize; ++x)
                 {
-                    _cellMatrix[x, y].Update();
+                    _cellMatrix[x, y].UpdateGem();
                 }
             }
         }
@@ -159,7 +159,7 @@ namespace Match3.Core
                     observer += delta;
                     if (InBounds(observer) &&
                         gem.Equals(_cellMatrix[observer.X, observer.Y].Gem) &&
-                        (_cellMatrix[observer.X, observer.Y].IsIdle || checkDynamic))
+                        (!_cellMatrix[observer.X, observer.Y].GemIsFalling || checkDynamic))
                     {
                         if (delta.X != 0)
                             rowSize.X++;
@@ -195,7 +195,7 @@ namespace Match3.Core
                 {
                     observer += delta;
                     if (InBounds(observer) &&
-                        _cellMatrix[observer.X, observer.Y].IsIdle &&
+                        !_cellMatrix[observer.X, observer.Y].GemIsFalling &&
                         gem.Equals(_cellMatrix[observer.X, observer.Y].Gem))
                     {
                         _cellMatrix[observer.X, observer.Y].ActivateGem();
@@ -284,39 +284,42 @@ namespace Match3.Core
             }
         }
 
-        private bool ApplyGravityToCell(int xPosition, int yPosition)
+        private void ApplyGravityToCell(int x, int y)
         {
-            Cell cell = _cellMatrix[xPosition, yPosition];
+            Cell cell = _cellMatrix[x, y];
             if (cell.Gem is null)
-                return true;
+                return;
 
-            cell.ApplyGravity(_gravity);
-            cell.ApplyFallVelocity();
-
-            int bottomCellY = yPosition + 1;
-            if (bottomCellY == _ySize || _cellMatrix[xPosition, bottomCellY].IsIdle)
+            int bottomX = y + 1;
+            if (bottomX == _ySize || !_cellMatrix[x, bottomX].GemIsFalling)
             {
+                if (!cell.GemIsFalling)
+                    return;
+
+                cell.ApplyGravity(_gravity);
                 if (cell.YOffset >= 0.0f)
                 {
-                    cell.ResetOffset();
                     cell.ResetVelocity();
-                    if (CheckRowAt(xPosition, yPosition))
-                        ActivateRowAt(xPosition, yPosition);
+                    cell.ResetOffset();
+                    if (CheckRowAt(x, y))
+                        ActivateRowAt(x, y);
                 }
-                return cell.IsIdle;
+                return;
             }
 
+            Cell bottomCell = _cellMatrix[x, y + 1];
+            cell.ApplyGravity(_gravity);
             if (cell.YOffset > 0.5f)
             {
-                Cell bottomCell = _cellMatrix[xPosition, bottomCellY];
                 if (bottomCell.Gem is null)
-                {
                     cell.MoveGemTo(bottomCell, Direction.Down);
-                }
                 else
-                    throw new InvalidOperationException();
+                {
+                    cell.ResetVelocity();
+                    if (!bottomCell.GemIsFalling)
+                        cell.ResetOffset();
+                }
             }
-            return cell.IsIdle;
         }
 
         public bool InBounds(int x, int y) =>

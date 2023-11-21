@@ -5,18 +5,14 @@ namespace Match3.Core
 {
     public class Game
     {
-        private int _xSize;
-        private int _ySize;
         private Map _map;
 
         private Vector2? _selectedCell;
 
         public Game(int xSize, int ySize, int physicalFrames)
         {
-            _xSize = xSize;
-            _ySize = ySize;
             float timePerFrame = 1f / physicalFrames;
-            _map = new Map(_xSize, _ySize, timePerFrame, timePerFrame * 5);
+            _map = new Map(xSize, ySize, timePerFrame, timePerFrame * 5);
 
             _map.SetListOfGems([
                 new Gem(0), // Red
@@ -51,13 +47,13 @@ namespace Match3.Core
             if (_map.SwapInProgress ||
                 !_map.InBounds(x, y) ||
                 _map.CellAt(x, y) is null ||
-                !_map.CellAt(x, y).IsIdle)
+                _map.CellAt(x, y).GemIsFalling)
             {
                 ResetCellSelection();
                 return;
             }
 
-            Vector2 newPosition = new Vector2(x, y);
+            Vector2 newPosition = new (x, y);
             if (_selectedCell == null)
             {
                 _selectedCell = newPosition;

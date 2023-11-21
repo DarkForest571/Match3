@@ -11,7 +11,7 @@ namespace Match3.Core
 
         public IReadOnlyGem? Gem { get; }
 
-        public bool IsIdle { get; }
+        public bool GemIsFalling { get; }
     }
 
     public class Cell : IReadOnlyCell
@@ -20,6 +20,7 @@ namespace Match3.Core
         private float _yOffset; // (-0.5, 0.5]
         private float _xVelocity;
         private float _yVelocity;
+        private bool _isFalling;
         private Gem? _gem;
         private Gem? _newGem;
 
@@ -27,8 +28,11 @@ namespace Match3.Core
         {
             _xOffset = 0.0f;
             _yOffset = 0.0f;
+            _xVelocity = 0.0f;
             _yVelocity = 0.0f;
+            _isFalling = true;
             _gem = null;
+            _newGem = null;
         }
 
         public float XOffset => _xOffset;
@@ -37,22 +41,25 @@ namespace Match3.Core
 
         public IReadOnlyGem? Gem => _gem;
 
-        public bool IsIdle => _gem != null && (_gem.State == GemState.Idle || _gem.State == GemState.Active);
+        public bool GemIsFalling => _gem == null || _isFalling;
 
         public bool IsExpiredGem => _gem != null && _gem.State == GemState.Expired;
 
         public void SpawnGem(Gem gem)
         {
-            _gem = gem;
             _xOffset = 0.0f;
             _yOffset = -0.5f;
             _xVelocity = 0.0f;
             _yVelocity = 0.0f;
+            _isFalling = true;
+            _gem = gem;
+            _newGem = null;
         }
 
         public void SwapGems(Cell cell)
         {
             (_gem, cell._gem) = (cell._gem, _gem);
+            (_newGem, cell._newGem) = (cell._newGem, _newGem);
         }
 
         public void ActivateGem(Gem? newGem = null)
@@ -63,7 +70,7 @@ namespace Match3.Core
             _gem.Activate();
         }
 
-        public void Update()
+        public void UpdateGem()
         {
             _gem?.Update();
         }
@@ -80,7 +87,9 @@ namespace Match3.Core
 
             cell._xVelocity = _xVelocity;
             cell._yVelocity = _yVelocity;
+            cell._isFalling = _isFalling;
             cell._gem = _gem;
+            cell._newGem = _newGem;
             _gem = null;
             switch (direction)
             {
@@ -105,20 +114,23 @@ namespace Match3.Core
             }
         }
 
-        public void ApplyGravity(float gravity)
+        public void AddVelocity(float x, float y)
         {
-            _yVelocity += gravity;
+            _xVelocity += x;
+            _yVelocity += y;
         }
 
-        public void ApplyFallVelocity()
+        public void ApplyVelocity()
         {
+            _xOffset += _xVelocity;
             _yOffset += _yVelocity;
         }
 
-        public void SetOffset(float x, float y)
+        public void ApplyGravity(float gravity)
         {
-            _xOffset = x;
-            _yOffset = y;
+            _yVelocity += gravity;
+            _yOffset += _yVelocity;
+            _isFalling = true;
         }
 
         public void ResetOffset()
@@ -131,6 +143,7 @@ namespace Match3.Core
         {
             _xVelocity = 0.0f;
             _yVelocity = 0.0f;
+            _isFalling = false;
         }
     }
 }
