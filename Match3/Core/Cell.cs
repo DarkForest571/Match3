@@ -21,8 +21,8 @@ namespace Match3.Core
         private float _xVelocity;
         private float _yVelocity;
         private bool _isFalling;
-        private Gem? _gem;
-        private Gem? _newGem;
+        private GameObject? _gameObject;
+        private GameObject? _newGameObject;
 
         public Cell()
         {
@@ -31,19 +31,19 @@ namespace Match3.Core
             _xVelocity = 0.0f;
             _yVelocity = 0.0f;
             _isFalling = true;
-            _gem = null;
-            _newGem = null;
+            _gameObject = null;
+            _newGameObject = null;
         }
 
         public float XOffset => _xOffset;
 
         public float YOffset => _yOffset;
 
-        public IReadOnlyGem? Gem => _gem;
+        public IReadOnlyGem? Gem => _gameObject as Gem;
 
-        public bool GemIsFalling => _gem == null || _isFalling;
+        public bool GemIsFalling => _gameObject == null || _isFalling;
 
-        public bool IsExpiredGem(int frame) => _gem != null && _gem.IsExpired(frame);
+        public bool IsExpiredGem(int frame) => _gameObject != null && ((Gem)_gameObject).IsExpired(frame);
 
         public void SpawnGem(Gem gem)
         {
@@ -52,45 +52,45 @@ namespace Match3.Core
             _xVelocity = 0.0f;
             _yVelocity = 0.0f;
             _isFalling = true;
-            _gem = gem;
-            _newGem = null;
+            _gameObject = gem;
+            _newGameObject = null;
         }
 
-        public void SwapGems(Cell cell)
+        public void SwapObjects(Cell cell)
         {
-            (_gem, cell._gem) = (cell._gem, _gem);
-            (_newGem, cell._newGem) = (cell._newGem, _newGem);
+            (_gameObject, cell._gameObject) = (cell._gameObject, _gameObject);
+            (_newGameObject, cell._newGameObject) = (cell._newGameObject, _newGameObject);
         }
 
         public void ActivateGem(int frame, Gem? newGem = null)
         {
-            if (_gem is null)
+            if (_gameObject as Gem is null)
                 return;
-            _newGem = newGem;
-            _gem.Activate(frame);
+            _newGameObject = newGem;
+            ((Gem)_gameObject).Activate(frame);
         }
 
         public void UpdateGem(int frame)
         {
-            _gem?.Update(frame);
+            (_gameObject as Gem)?.Update(frame);
         }
 
         public void DestroyGem()
         {
-            _gem = _newGem;
+            _gameObject = _newGameObject;
         }
 
         public void MoveGemTo(Cell cell, Direction direction)
         {
-            if (cell._gem is not null)
+            if (cell._gameObject is not null)
                 throw new InvalidOperationException();
 
             cell._xVelocity = _xVelocity;
             cell._yVelocity = _yVelocity;
             cell._isFalling = _isFalling;
-            cell._gem = _gem;
-            cell._newGem = _newGem;
-            _gem = null;
+            cell._gameObject = _gameObject;
+            cell._newGameObject = _newGameObject;
+            _gameObject = null;
             switch (direction)
             {
                 case Direction.Up:
