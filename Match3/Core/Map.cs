@@ -64,6 +64,15 @@ namespace Match3.Core
 
         public bool SwapInProgress(int frame) => _cellSwapper.SwapInProgress(frame);
 
+        public void SwapGems(Vector2 first, Vector2 second, int frame)
+        {
+            _cellSwapper.InitSwap(_cellMatrix[first.X, first.Y],
+                                 _cellMatrix[second.X, second.Y],
+                                 first,
+                                 second,
+                                 frame);
+        }
+
         public virtual void InitMap()
         {
             for (int y = 0; y < _ySize; ++y)
@@ -100,6 +109,22 @@ namespace Match3.Core
             _gems = gems;
         }
 
+        private void SpawnGems()
+        {
+            for (int x = 0; x < _xSize; ++x)
+            {
+                if (_spawnCell[x].Gem is null)
+                {
+                    int choice;
+                    do
+                    {
+                        choice = Random.Shared.Next(_gems.Count);
+                        _spawnCell[x].SpawnGem(_gems[choice].Clone());
+                    } while (CheckRowAt(x, 0));
+                }
+            }
+        }
+
         public void Update(int frame)
         {
             ApplyGravity(frame);
@@ -123,16 +148,7 @@ namespace Match3.Core
             DestroyExpiredGems(frame);
         }
 
-        public void SwapGems(Vector2 first, Vector2 second, int frame)
-        {
-            _cellSwapper.InitSwap(_cellMatrix[first.X, first.Y],
-                                 _cellMatrix[second.X, second.Y],
-                                 first,
-                                 second,
-                                 frame);
-        }
-
-        public void UpdateAllCells(int frame)
+        private void UpdateAllCells(int frame)
         {
             for (int y = 0; y < _xSize; ++y)
             {
@@ -143,7 +159,28 @@ namespace Match3.Core
             }
         }
 
-        #region Check and activate combo
+        private void DestroyExpiredGems(int frame)
+        {
+            for (int y = _xSize - 1; y >= 0; --y)
+            {
+                for (int x = _xSize - 1; x >= 0; --x)
+                {
+                    if (_cellMatrix[x, y].IsExpiredGem(frame))
+                    {
+                        IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
+                        if (gem is BombGem)
+                        {
+                            BombGem bombGem = (BombGem)gem;
+                            Vector2 delta = new Vector2(bombGem.ExplosionRadius, bombGem.ExplosionRadius);
+                            ActivateArea(new Vector2(x, y) - delta, new Vector2(x, y) + delta, frame);
+                        }
+                        _cellMatrix[x, y].DestroyGem();
+                    }
+                }
+            }
+        }
+
+        #region Check and activate row
 
         public bool CheckRowAt(Vector2 position, bool checkDynamic = false) =>
             CheckRowAt(position.X, position.Y, checkDynamic);
@@ -235,43 +272,6 @@ namespace Match3.Core
             if (rowSize.Y == 4)
                 return new LineGem(gem, LineGemType.Horizontal, _framesForLine);
             return null;
-        }
-
-        private void SpawnGems()
-        {
-            for (int x = 0; x < _xSize; ++x)
-            {
-                if (_spawnCell[x].Gem is null)
-                {
-                    int choice;
-                    do
-                    {
-                        choice = Random.Shared.Next(_gems.Count);
-                        _spawnCell[x].SpawnGem(_gems[choice].Clone());
-                    } while (CheckRowAt(x, 0));
-                }
-            }
-        }
-
-        private void DestroyExpiredGems(int frame)
-        {
-            for (int y = _xSize - 1; y >= 0; --y)
-            {
-                for (int x = _xSize - 1; x >= 0; --x)
-                {
-                    if (_cellMatrix[x, y].IsExpiredGem(frame))
-                    {
-                        IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
-                        if (gem is BombGem)
-                        {
-                            BombGem bombGem = (BombGem)gem;
-                            Vector2 delta = new Vector2(bombGem.ExplosionRadius, bombGem.ExplosionRadius);
-                            ActivateArea(new Vector2(x, y) - delta, new Vector2(x, y) + delta, frame);
-                        }
-                        _cellMatrix[x, y].DestroyGem();
-                    }
-                }
-            }
         }
 
         private void ActivateArea(Vector2 upperLeft, Vector2 bottomRight, int frame)
