@@ -13,6 +13,10 @@
             _timer = 0.0f;
             _deltaT = deltaT;
         }
+
+        public BombGem(IReadOnlyGem gem, int explosionRadius, float deltaT)
+            : this(gem.ColorID, explosionRadius, deltaT) { }
+
         public override BombGem Clone() => new BombGem(ColorID, _explosionRadius, _deltaT);
 
         public override void Activate()

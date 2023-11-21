@@ -15,5 +15,7 @@
         {
             Type = type;
         }
+
+        public LineGem(IReadOnlyGem gem, LineGemType type) : this(gem.ColorID, type) { }
     }
 }

@@ -19,7 +19,7 @@ namespace Match3.Core
         private float _deltaX;
         private float _deltaY;
         private float _tParam;
-        private float _tParamDelta;
+        private readonly float _tParamDelta;
 
         private SwapperState _state;
 
@@ -46,9 +46,6 @@ namespace Match3.Core
 
         public void SetReverse()
         {
-            (_firstCell, _secondCell) = (_secondCell, _firstCell);
-            (_deltaX, _deltaY) = (-_deltaX, -_deltaY);
-            _tParam = 0.0f;
             _state = SwapperState.ReverseSwapping;
         }
 
@@ -73,6 +70,10 @@ namespace Match3.Core
                 _firstCell.SwapGems(_secondCell);
                 _firstCell.SetStatic();
                 _secondCell.SetStatic();
+
+                (_firstCell, _secondCell) = (_secondCell, _firstCell);
+                (_deltaX, _deltaY) = (-_deltaX, -_deltaY);
+                _tParam = 0.0f;
 
                 if (_state == SwapperState.Swapping)
                     _state = SwapperState.Ready;

@@ -17,11 +17,12 @@ namespace Match3.Core
     public class Cell : IReadOnlyCell
     {
         private bool _isStatic;
-        protected float _xOffset; // (-0.5, 0.5]
-        protected float _yOffset; // (-0.5, 0.5]
+        private float _xOffset; // (-0.5, 0.5]
+        private float _yOffset; // (-0.5, 0.5]
         private float _xVelocity;
         private float _yVelocity;
-        protected Gem? _gem;
+        private Gem? _gem;
+        private Gem? _newGem;
 
         public Cell()
         {
@@ -54,15 +55,18 @@ namespace Match3.Core
             (_gem, cell._gem) = (cell._gem, _gem);
         }
 
-        public void ActivateGem()
+        public void ActivateGem(Gem? newGem)
         {
-            if (_gem is not null)
-                _gem.Activate();
+            if (_gem is null)
+                return;
+            _newGem = newGem;
+            _gem.Activate();
+            _isStatic = true;
         }
 
         public void DestroyGem()
         {
-            _gem = null;
+            _gem = _newGem;
             _isStatic = false;
         }
 

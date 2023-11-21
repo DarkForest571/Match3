@@ -89,23 +89,21 @@ namespace Match3.Core
             _cellSwapper.Update();
             if (_cellSwapper.State == SwapperState.Ready)
             {
-                if (CheckRowAt(_cellSwapper.FirstPosition))
-                {
+                bool first = CheckRowAt(_cellSwapper.FirstPosition);
+                bool second = CheckRowAt(_cellSwapper.SecondPosition);
+
+                if (first || second)
                     _cellSwapper.Finish();
-                    ActivateRowAt(_cellSwapper.FirstPosition);
-                }
-                else if (CheckRowAt(_cellSwapper.SecondPosition))
-                {
-                    _cellSwapper.Finish();
-                    ActivateRowAt(_cellSwapper.SecondPosition);
-                }
                 else
-                {
                     _cellSwapper.SetReverse();
-                }
+
+                if (first)
+                    ActivateRowAt(_cellSwapper.FirstPosition);
+                if (second)
+                    ActivateRowAt(_cellSwapper.SecondPosition);
             }
 
-            TryDestroyGems();
+            DestroyExpiredGems();
         }
 
         public void SwapGems(Vector2 first, Vector2 second)
@@ -140,7 +138,7 @@ namespace Match3.Core
 
             foreach (var delta in Vector2.AllDirections)
             {
-                Vector2 observer = new Vector2(x, y);
+                Vector2 observer = new(x, y);
 
                 for (int i = 0; i < 2; ++i)
                 {
@@ -177,24 +175,37 @@ namespace Match3.Core
                 if (rowSize.X < 3 && delta.X != 0 ||
                     rowSize.Y < 3 && delta.Y != 0)
                     continue;
-                Vector2 observer = new Vector2(x,y);
+                Vector2 observer = new(x, y);
 
                 for (int i = 0; i < 2; ++i)
                 {
                     observer += delta;
                     if (InBounds(observer) &&
+                        _cellMatrix[observer.X, observer.Y].IsStatic &&
                         gem.Equals(_cellMatrix[observer.X, observer.Y].Gem))
                     {
-                        _cellMatrix[observer.X, observer.Y].ActivateGem();
+                        _cellMatrix[observer.X, observer.Y].ActivateGem(null);
                     }
                     else
                         break;
                 }
             }
-            _cellMatrix[x, y].ActivateGem();
+            _cellMatrix[x, y].ActivateGem(CalcBonus(gem, rowSize));
         }
 
         #endregion
+
+        private Gem? CalcBonus(IReadOnlyGem gem, Vector2 rowSize)
+        {
+            if (rowSize.X == 4)
+                return new LineGem(gem, LineGemType.Vertical);
+            if (rowSize.Y == 4)
+                return new LineGem(gem, LineGemType.Horizontal);
+            if (rowSize.X == 5 || rowSize.Y == 5 ||
+                (rowSize.X >= 3 && rowSize.Y >= 3))
+                return new BombGem(gem, 1, _gravity);
+            return null;
+        }
 
         private void SpawnGems()
         {
@@ -206,13 +217,13 @@ namespace Match3.Core
                     do
                     {
                         choice = Random.Shared.Next(_gems.Count);
-                        _spawnCell[x].SpawnGem(_gems[choice]);
+                        _spawnCell[x].SpawnGem(_gems[choice].Clone());
                     } while (CheckRowAt(x, 0));
                 }
             }
         }
 
-        public void TryDestroyGems()
+        public void DestroyExpiredGems()
         {
             for (int y = _xSize - 1; y >= 0; --y)
             {
