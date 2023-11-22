@@ -6,7 +6,9 @@ namespace Match3.Core.GameObjects
     {
         public bool IsActive { get; }
 
-        public bool IsExpired(int frame);
+        public bool IsExpired { get; }
+
+        public float NormalizedTimer { get; }
 
         public bool Equals(IReadOnlyGem? second) => second is not null && ColorID == second.ColorID;
     }
@@ -15,12 +17,13 @@ namespace Match3.Core.GameObjects
     {
         protected int _startFrame;
         protected int _endFrame;
+        protected int _lastFrame;
         protected readonly int _framesBeforeExpired;
 
         public Gem(int colorID,
                    int framesBeforeExpired,
-                   Vector2 position = default) : base(colorID,
-                                                      position)
+                   Vector2<float> position = default) : base(colorID,
+                                                             position)
         {
             _framesBeforeExpired = framesBeforeExpired;
             _startFrame = -1;
@@ -28,17 +31,26 @@ namespace Match3.Core.GameObjects
 
         public bool IsActive => _startFrame > -1;
 
-        public bool IsExpired(int frame) => _startFrame > 1 && frame >= _endFrame;
+        public bool IsExpired => IsActive && _lastFrame >= _endFrame;
 
-        public virtual Gem Clone() => new (ColorID,
+        public float NormalizedTimer => (_lastFrame - _startFrame) / (float)_framesBeforeExpired;
+
+        public override Gem Clone() => new(ColorID,
                                            _framesBeforeExpired,
-                                           new(PositionX, PositionY));
+                                           Position);
 
-        public void Activate(int frame)
+        public virtual void Activate(int frame)
         {
             _startFrame = frame;
             _endFrame = frame + _framesBeforeExpired;
         }
-        public virtual void Update(int frame) { }
+
+        public override void Update(int frame)
+        {
+            base.Update(frame);
+            if (!IsActive)
+                return;
+            _lastFrame = frame;
+        }
     }
 }

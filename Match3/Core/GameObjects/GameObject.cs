@@ -6,37 +6,46 @@ namespace Match3.Core.GameObjects
     {
         public int ColorID { get; }
 
-        public float PositionX { get; }
+        public Vector2<float> Position { get; }
 
-        public float PositionY { get; }
+        public bool IsStatic { get; }
     }
 
-    public class GameObject
+    public abstract class GameObject
     {
-        private int _colorID;
+        private readonly int _colorID;
 
-        private float _positionX;
-        private float _positionY;
-        private float _velocityX;
-        private float _velocityY;
-        private float _accelerationX;
-        private float _accelerationY;
+        private Vector2<float> _position;
+        private Vector2<float> _velocity;
 
-        public GameObject(int colorID, Vector2 position = default)
+        public GameObject(int colorID, Vector2<float> position = default)
         {
             _colorID = colorID;
-            _positionX = position.X;
-            _positionY = position.Y;
-            _velocityX = 0.0f;
-            _velocityY = 0.0f;
-            _accelerationX = 0.0f;
-            _accelerationY = 0.0f;
+            _position = position;
+            _velocity = Vector2<float>.Zero;
         }
 
         public int ColorID => _colorID;
 
-        public float PositionX => _positionX;
+        public Vector2<float> Position => _position;
 
-        public float PositionY => _positionY;
+        public bool IsStatic => _velocity == Vector2<float>.Zero;
+
+        public abstract GameObject Clone();
+
+        public virtual void Update(int frame)
+        {
+            _position += _velocity;
+        }
+
+        public void AddVelocity(Vector2<float> acceleration)
+        {
+            _velocity += acceleration;
+        }
+
+        public void SetStatic()
+        {
+            _velocity = Vector2<float>.Zero;
+        }
     }
 }

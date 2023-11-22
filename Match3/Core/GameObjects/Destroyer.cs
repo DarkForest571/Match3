@@ -2,11 +2,42 @@
 
 namespace Match3.Core.GameObjects
 {
-    public class Destroyer
+    public interface IReadOnlyDestroyer : IReadOnlyGameObject
     {
-        public Destroyer(int colorID, Direction direction, Vector2 position)
+        public Direction Direction { get; }
+    }
+
+    public class Destroyer : GameObject, IReadOnlyDestroyer
+    {
+        private readonly Direction _direction;
+        private Vector2<float> _acceleration;
+
+        public Destroyer(int colorID,
+                         Direction direction,
+                         float accelerationPerFrame,
+                         Vector2<float> position = default) : base(colorID,
+                                                                   position)
         {
-            Vector2 dir = Vector2.FromDirection(direction);
+            _direction = direction;
+            _acceleration = Vector2<float>.FromDirection(direction) * accelerationPerFrame;
+        }
+
+        public Direction Direction => _direction;
+
+        public override Destroyer Clone()
+        {
+            float acceleration =
+                _acceleration.X != 0.0f
+                ? Math.Abs(_acceleration.X)
+                : Math.Abs(_acceleration.Y);
+            return new(ColorID, _direction, acceleration, Position);
+        }
+
+
+        public override void Update(int frame)
+        {
+            AddVelocity(_acceleration);
+            base.Update(frame);
         }
     }
 }

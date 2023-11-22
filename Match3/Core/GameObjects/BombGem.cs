@@ -2,18 +2,21 @@
 
 namespace Match3.Core.GameObjects
 {
-    public class BombGem : Gem
+    public interface IReadOnlyBombGem : IReadOnlyGem
+    {
+        public int ExplosionRadius { get; }
+    }
+
+    public class BombGem : Gem, IReadOnlyBombGem
     {
         private readonly int _explosionRadius;
-
-        private int _lastFrame;
 
         public BombGem(int colorID,
                        int explosionRadius,
                        int framesBeforeExpired,
-                       Vector2 position = default) : base(colorID,
-                                                          framesBeforeExpired,
-                                                          position)
+                       Vector2<float> position = default) : base(colorID,
+                                                                 framesBeforeExpired,
+                                                                 position)
         {
             _explosionRadius = explosionRadius;
         }
@@ -21,23 +24,17 @@ namespace Match3.Core.GameObjects
         public BombGem(IReadOnlyGem gem,
                        int explosionRadius,
                        int framesBeforeExpired,
-                       Vector2 position = default) : this(gem.ColorID,
-                                                          explosionRadius,
-                                                          framesBeforeExpired,
-                                                          position) { }
+                       Vector2<float> position = default) : this(gem.ColorID,
+                                                                 explosionRadius,
+                                                                 framesBeforeExpired,
+                                                                 position)
+        { }
 
         public int ExplosionRadius => _explosionRadius;
 
-        public float NormalizedTimer => (_lastFrame - _startFrame) / (float)_framesBeforeExpired;
-
-        public override BombGem Clone() => new BombGem(ColorID, _explosionRadius, _framesBeforeExpired, new(PositionX, PositionY));
-
-        public override void Update(int frame)
-        {
-            if (!IsActive)
-                return;
-
-            _lastFrame = frame;
-        }
+        public override BombGem Clone() => new (ColorID,
+                                                _explosionRadius,
+                                                _framesBeforeExpired,
+                                                Position);
     }
 }
