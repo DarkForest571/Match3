@@ -20,6 +20,8 @@ namespace Match3.Core.GameObjects
         protected int _lastFrame;
         protected readonly int _framesBeforeExpired;
 
+        private Gem? _newGem;
+
         public Gem(int colorID,
                    int framesBeforeExpired,
                    Vector2<float> position = default) : base(colorID,
@@ -39,10 +41,11 @@ namespace Match3.Core.GameObjects
                                            _framesBeforeExpired,
                                            Position);
 
-        public virtual void Activate(int frame)
+        public virtual void Activate(int frame, Gem? newGem = null)
         {
             _startFrame = frame;
             _endFrame = frame + _framesBeforeExpired;
+            _newGem = newGem;
         }
 
         public override void Update(int frame)
@@ -51,6 +54,11 @@ namespace Match3.Core.GameObjects
             if (!IsActive)
                 return;
             _lastFrame = frame;
+        }
+
+        public Gem? Destroy()
+        {
+            return _newGem;
         }
     }
 }
