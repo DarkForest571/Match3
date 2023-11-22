@@ -80,9 +80,13 @@ namespace Match3.Utils
                 _ => throw new NotImplementedException()
             };
 
+        public readonly Vector2<U> ConvertTo<U>() where U : INumber<U> =>
+            new((U)Convert.ChangeType(X, typeof(U)),
+                (U)Convert.ChangeType(Y, typeof(U)));
+
         public readonly void Deconstruct(out T X, out T Y) => (X, Y) = (this.X, this.Y);
 
-        public override readonly bool Equals(object? obj) => obj is Vector2<T> && this == (Vector2<T>)obj;
+        public override readonly bool Equals(object? obj) => obj is Vector2<T> vector && this == vector;
 
         public override int GetHashCode()
         {
