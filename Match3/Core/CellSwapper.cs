@@ -6,41 +6,36 @@ namespace Match3.Core
     {
         private Cell _firstCell;
         private Cell _secondCell;
-        private Vector2 _firstPosition;
-        private Vector2 _secondPosition;
-        private Vector2 _delta;
+        private Vector2<int> _firstPosition;
+        private Vector2<int> _secondPosition;
+        private Vector2<float> _delta;
 
-        private int _startFrame;
-        private int _endFrame;
-        private readonly int _framesForSwap;
+        private readonly GameTimer _timer;
 
         private bool _isReverseSwapping;
 
         public CellSwapper(int framesForSwap)
         {
-            _framesForSwap = framesForSwap;
             _isReverseSwapping = false;
-            _startFrame = -1;
+            _timer = new(framesForSwap);
         }
 
-        public Vector2 FirstPosition => _firstPosition;
-        public Vector2 SecondPosition => _secondPosition;
+        public Vector2<int> FirstPosition => _firstPosition;
 
-        private bool IsActive => _startFrame > -1;
+        public Vector2<int> SecondPosition => _secondPosition;
 
-        private void StopSwapper() => _startFrame = -1;
+        public bool IsActive(int frame) => _timer.IsActivated(frame);
 
-        public void InitSwap(Cell first, Cell second, Vector2 firstPosition, Vector2 secondPosition, int frame)
+        public bool IsSwapped(int frame) => _timer.IsExpired(frame);
+
+        public void InitSwap(Cell first, Cell second, Vector2<int> firstPosition, Vector2<int> secondPosition, int frame)
         {
             (_firstCell, _secondCell) = (first, second);
             (_firstPosition, _secondPosition) = (firstPosition, secondPosition);
-            _delta = secondPosition - firstPosition;
-            _startFrame = frame;
-            _endFrame = frame + _framesForSwap;
+            _delta = (secondPosition - firstPosition).ConvertTo<float>();
+            _timer.StartTimer(frame);
             _isReverseSwapping = false;
         }
-
-        public bool SwapInProgress(int frame) => frame < _endFrame;
 
         public void Finish(bool makeRow, int frame)
         {
@@ -48,38 +43,31 @@ namespace Match3.Core
             {
                 (_firstCell, _secondCell) = (_secondCell, _firstCell);
                 _delta = -_delta;
-                _startFrame = frame;
-                _endFrame = _startFrame + _framesForSwap;
+                _timer.StartTimer(frame);
             }
             else
-                StopSwapper();
+                _timer.ResetTimer();
         }
 
-        public bool Update(int frame)
+        public void Update(int frame)
         {
-            if (!IsActive)
-                return false;
+            if (!IsActive(frame))
+                return;
 
-            float tParam = (frame - _startFrame) / (float)_framesForSwap;
-            float slerp = (float)(-Math.Cos(tParam * Math.PI) + 1.0) / 2;
-            float dX = _delta.X * slerp;
-            float dY = _delta.Y * slerp;
-            _firstCell.SetOffset(dX, dY);
-            _secondCell.SetOffset(-dX, -dY);
+            float slerp = (float)(-Math.Cos(_timer.Normalized(frame) * Math.PI) + 1.0) / 2;
+            Vector2<float> offset = _delta * slerp;
+            _firstCell.SetOffset(offset);
+            _firstCell.SetOffset(-offset);
 
-            if (!SwapInProgress(frame))
+            if (_timer.IsExpired(frame))
             {
                 _firstCell.SwapGems(_secondCell);
-                //_firstCell.ResetVelocity();
-                //_secondCell.ResetVelocity();
                 _firstCell.ResetOffset();
                 _secondCell.ResetOffset();
 
                 if (_isReverseSwapping)
-                    StopSwapper();
-                return !_isReverseSwapping;
+                    _timer.ResetTimer();
             }
-            return false;
         }
     }
 }

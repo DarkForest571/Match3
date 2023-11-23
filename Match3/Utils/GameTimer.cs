@@ -25,7 +25,7 @@
 
         public bool IsExpired(int frame) => _endFrame != -1 && frame >= _endFrame;
 
-        public float NormalizedTimer(int frame) => (frame - _startFrame) / (float)_framesPerTick;
+        public float Normalized(int frame) => (frame - _startFrame) / (float)_framesPerTick;
 
         public void ResetTimer()
         {

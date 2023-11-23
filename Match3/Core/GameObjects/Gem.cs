@@ -34,7 +34,7 @@ namespace Match3.Core.GameObjects
 
         public bool IsExpired(int frame) => _timer.IsExpired(frame);
 
-        public float NormalizedTimer(int frame) => _timer.NormalizedTimer(frame);
+        public float NormalizedTimer(int frame) => _timer.Normalized(frame);
 
         public override Gem Clone() => new(ColorID,
                                            _timer.FramesPerTick,
