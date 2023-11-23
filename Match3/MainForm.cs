@@ -1,5 +1,5 @@
 using Match3.Core;
-using Match3.Core.Gems;
+using Match3.Core.GameObjects;
 using Match3.Utils;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -9,13 +9,13 @@ namespace Match3
 {
     public partial class MainForm : Form
     {
-        private Game _game;
+        private readonly Game _game;
 
-        private Graphics _graphics;
-        private BufferedGraphics _bufferedGraphics;
+        private readonly Graphics _graphics;
+        private readonly BufferedGraphics _bufferedGraphics;
 
         private Size _cellSize;
-        private Vector2 _gridOffset;
+        private Vector2<int> _gridOffset;
 
         private List<Bitmap> _gemsTextures;
         private List<Bitmap> _bombTextures;
@@ -32,74 +32,74 @@ namespace Match3
             _bufferedGraphics = BufferedGraphicsManager.Current.Allocate(CreateGraphics(), DisplayRectangle);
             _graphics = _bufferedGraphics.Graphics;
 
-            _cellSize = new Size(100, 100);
-            _gridOffset = new Vector2(100, 0);
+            _cellSize = new(100, 100);
+            _gridOffset = new(100, 0);
 
-            _gemsTextures = new List<Bitmap>();
-            _bombTextures = new List<Bitmap>();
-            _horArrowsTextures = new List<Bitmap>();
-            _verArrowsTextures = new List<Bitmap>();
+            _gemsTextures = [];
+            _bombTextures = [];
+            _horArrowsTextures = [];
+            _verArrowsTextures = [];
             LoadTextures();
         }
 
         private void LoadTextures()
         {
-            Bitmap gemsTexture = new Bitmap("..\\..\\..\\..\\img\\sprite_fruit_face_atlas_01.png");
-            gemsTexture = new Bitmap(gemsTexture, 400, 400);
+            Bitmap gemsTexture = new("..\\..\\..\\..\\img\\sprite_fruit_face_atlas_01.png");
+            gemsTexture = new(gemsTexture, 400, 400);
 
-            Point[] gemPositionsInAtlas = {
-                new (1,0), // Red
-                new (2,0), // Green
-                new (0,1), // Blue
-                new (2,1), // Yellow
-                new (3,2)  // Orange
-            };
+            Point[] gemPositionsInAtlas = [
+                new(1, 0), // Red
+                new(2, 0), // Green
+                new(0, 1), // Blue
+                new(2, 1), // Yellow
+                new(3, 2)  // Orange
+            ];
 
             LoadFromAtlas(_cellSize, gemPositionsInAtlas, _gemsTextures, gemsTexture);
 
-            Bitmap bonusesTexture = new Bitmap("..\\..\\..\\..\\img\\sprite_arrow_atlas.png");
-            bonusesTexture = new Bitmap(bonusesTexture, 400, 400);
+            Bitmap bonusesTexture = new("..\\..\\..\\..\\img\\sprite_arrow_atlas.png");
+            bonusesTexture = new(bonusesTexture, 400, 400);
 
-            Point[] bombPositionsInAtlas = {
-                new (1,0), // Red
-                new (0,0), // Green
-                new (0,1), // Blue
-                new (2,0), // Yellow
-                new (3,0)  // Orange
-            };
+            Point[] bombPositionsInAtlas = [
+                new(1, 0), // Red
+                new(0, 0), // Green
+                new(0, 1), // Blue
+                new(2, 0), // Yellow
+                new(3, 0)  // Orange
+            ];
 
             LoadFromAtlas(_cellSize, bombPositionsInAtlas, _bombTextures, bonusesTexture);
 
-            Point[] horArrowsPositionsInAtlas = {
-                new (2,1), // Red left
-                new (0,3), // Green left
-                new (4,3), // Blue left
-                new (0,2), // Yellow left
-                new (4,2), // Orange left
-                new (3,1), // Red right
-                new (1,3), // Green right
-                new (5,3), // Blue right
-                new (1,2), // Yellow right
-                new (5,2)  // Orange right
-            };
+            Point[] horArrowsPositionsInAtlas = [
+                new(2, 1), // Red left
+                new(0, 3), // Green left
+                new(4, 3), // Blue left
+                new(0, 2), // Yellow left
+                new(4, 2), // Orange left
+                new(3, 1), // Red right
+                new(1, 3), // Green right
+                new(5, 3), // Blue right
+                new(1, 2), // Yellow right
+                new(5, 2)  // Orange right
+            ];
 
             LoadFromAtlas(new Size(_cellSize.Width / 2, _cellSize.Height),
                           horArrowsPositionsInAtlas,
                           _horArrowsTextures,
                           bonusesTexture);
 
-            Point[] verArrowsPositionsInAtlas = {
-                new (2,2), // Red up
-                new (1,6), // Green up
-                new (3,6), // Blue up
-                new (0,4), // Yellow up
-                new (3,4), // Orange up
-                new (2,3), // Red down
-                new (1,7), // Green down
-                new (3,7), // Blue down
-                new (0,5), // Yellow down
-                new (3,5)  // Orange down
-            };
+            Point[] verArrowsPositionsInAtlas = [
+                new(2, 2), // Red up
+                new(1, 6), // Green up
+                new(3, 6), // Blue up
+                new(0, 4), // Yellow up
+                new(3, 4), // Orange up
+                new(2, 3), // Red down
+                new(1, 7), // Green down
+                new(3, 7), // Blue down
+                new(0, 5), // Yellow down
+                new(3, 5)  // Orange down
+            ];
 
             LoadFromAtlas(new Size(_cellSize.Width, _cellSize.Height / 2),
                           verArrowsPositionsInAtlas,
@@ -112,7 +112,7 @@ namespace Match3
             _gridHighlightedImage = new Bitmap(_gridHighlightedImage, _cellSize);
         }
 
-        private void LoadFromAtlas(Size imageSize, Point[] points, List<Bitmap> images, Bitmap atlas)
+        private static void LoadFromAtlas(Size imageSize, Point[] points, List<Bitmap> images, Bitmap atlas)
         {
             for (int i = 0; i < points.Length; i++)
             {
@@ -129,17 +129,18 @@ namespace Match3
 
             DrawGrid();
             DrawGems();
+            DrawDestroyers();
 
             _bufferedGraphics.Render();
         }
 
         private void MainForm_MouseClick(object sender, MouseEventArgs e)
         {
-            Vector2 point = new(e.Location);
+            Vector2<int> point = new(e.Location.X, e.Location.Y);
 
             point -= _gridOffset;
 
-            if (point < Vector2.Zero)
+            if (point < Vector2<int>.Zero)
             {
                 _game.ResetCellSelection();
             }
@@ -171,7 +172,7 @@ namespace Match3
 
             if (_game.SelectedCell is not null)
             {
-                Vector2 position = _game.SelectedCell.Value;
+                Vector2<int> position = _game.SelectedCell.Value;
                 drawRect.Location = new(position.X * _cellSize.Width + _gridOffset.X, position.Y * _cellSize.Height + _gridOffset.Y);
                 _graphics.DrawImage(_gridHighlightedImage, drawRect);
             }
@@ -188,12 +189,12 @@ namespace Match3
                     IReadOnlyCell? cell = map.CellAt(x, y);
                     if (cell is not null && cell.Gem is not null)
                     {
-                        drawRect.Location = new((int)((x + cell.XOffset) * _cellSize.Width) + _gridOffset.X,
-                            (int)((y + cell.YOffset) * _cellSize.Height) + _gridOffset.Y);
+                        drawRect.Location = new((int)((x + cell.Offset.X) * _cellSize.Width) + _gridOffset.X,
+                            (int)((y + cell.Offset.Y) * _cellSize.Height) + _gridOffset.Y);
                         switch (cell.Gem)
                         {
                             case BombGem bombGem:
-                                if (bombGem.IsActive)
+                                if (bombGem.IsActive(_game.CurrentFrame))
                                 {
                                     _graphics.DrawImage(_bombTextures[cell.Gem.ColorID],
                                                         drawRect,
@@ -202,7 +203,7 @@ namespace Match3
                                                         _cellSize.Width,
                                                         _cellSize.Height,
                                                         GraphicsUnit.Pixel,
-                                                        GetTransparentAttributes(1.0f - bombGem.NormalizedTimer));
+                                                        GetTransparentAttributes(1.0f - bombGem.NormalizedTimer(_game.CurrentFrame)));
                                 }
                                 else
                                     _graphics.DrawImage(_bombTextures[cell.Gem.ColorID], drawRect);
@@ -234,12 +235,24 @@ namespace Match3
             }
         }
 
-        private ImageAttributes GetTransparentAttributes(float opacity)
+        private void DrawDestroyers()
         {
-            ColorMatrix matrix = new ColorMatrix();
-            matrix.Matrix33 = opacity;
- 
-            ImageAttributes attributes = new ImageAttributes();
+            List<Destroyer> destroyers = ((Map)_game.Map).Destroyers;
+
+            Rectangle horizontal = new(new(0, 0), new(_cellSize.Width, _cellSize.Height / 2));
+            Rectangle vertical = new(new(0, 0), new(_cellSize.Width / 2, _cellSize.Height));
+
+            // TODO draw it
+        }
+
+        private static ImageAttributes GetTransparentAttributes(float opacity)
+        {
+            ColorMatrix matrix = new()
+            {
+                Matrix33 = opacity
+            };
+
+            ImageAttributes attributes = new();
             attributes.SetColorMatrix(matrix, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
 
             return attributes;
