@@ -67,7 +67,7 @@ namespace Match3.Core
             while (reader.NodeType != XmlNodeType.Element)
                 reader.Read();
             XElement imagesInfo = XElement.Load(reader);
-            imagesInfo = imagesInfo.Elements().ElementAt(1);
+            imagesInfo = imagesInfo.Elements().ElementAt(0);
 
             Dictionary<string, List<Bitmap>> arraysOfImages = [];
             foreach (var elementOfType in imagesInfo.Elements())
