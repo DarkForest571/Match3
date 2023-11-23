@@ -1,6 +1,5 @@
 ﻿using Match3.Core.GameObjects;
 using Match3.Utils;
-using System.Drawing;
 using System.Drawing.Imaging;
 
 namespace Match3.Core
@@ -9,39 +8,41 @@ namespace Match3.Core
     {
         private readonly Game _game;
 
-        private readonly BufferedGraphics _bufferedGraphics;
-        private readonly Graphics _graphics;
+        private BufferedGraphics _bufferedGraphics;
 
-        private Size _cellSize;
+        private Vector2<int> _cellSize;
         private Vector2<int> _gridOffset;
 
-        private List<Bitmap> _gemsTextures;
-        private List<Bitmap> _bombTextures;
-        private List<Bitmap> _horArrowsTextures;
-        private List<Bitmap> _verArrowsTextures;
-        private Bitmap _gridImage;
-        private Bitmap _gridHighlightedImage;
+        private readonly List<Bitmap> _gemsTextures;
+        private readonly List<Bitmap> _bombTextures;
+        private readonly List<Bitmap> _horArrowsTextures;
+        private readonly List<Bitmap> _verArrowsTextures;
+        private Bitmap _gridTexture;
+        private Bitmap _selectedGridTexture;
 
-        public Renderer(Game game, BufferedGraphics bufferedGraphics)
+        public Renderer(Game game, Vector2<int> cellSize, Vector2<int> gridOffset)
         {
             _game = game;
 
-            _bufferedGraphics = bufferedGraphics;
-            _graphics = _bufferedGraphics.Graphics;
-
-            _cellSize = new(100, 100);
-            _gridOffset = new(100, 0);
+            _cellSize = cellSize;
+            _gridOffset = gridOffset;
 
             _gemsTextures = [];
             _bombTextures = [];
             _horArrowsTextures = [];
             _verArrowsTextures = [];
-            LoadTextures();
+        }
+
+        public void SetBufferedGraphics(BufferedGraphics bufferedGraphics)
+        {
+            _bufferedGraphics = bufferedGraphics;
         }
 
         public void Draw()
         {
-            _graphics.Clear(Color.MidnightBlue);
+            if (_bufferedGraphics is null)
+                return;
+            _bufferedGraphics.Graphics.Clear(Color.MidnightBlue);
 
             DrawGrid();
             DrawGems(_game.CurrentFrame);
@@ -55,61 +56,19 @@ namespace Match3.Core
             Bitmap gemsTexture = new("..\\..\\..\\..\\img\\sprite_fruit_face_atlas_01.png");
             gemsTexture = new(gemsTexture, 400, 400);
 
-            Point[] gemPositionsInAtlas = [
-                new(1, 0), // Red
-                new(2, 0), // Green
-                new(0, 1), // Blue
-                new(2, 1), // Yellow
-                new(3, 2)  // Orange
-            ];
-
             LoadFromAtlas(_cellSize, gemPositionsInAtlas, _gemsTextures, gemsTexture);
 
             Bitmap bonusesTexture = new("..\\..\\..\\..\\img\\sprite_arrow_atlas.png");
             bonusesTexture = new(bonusesTexture, 400, 400);
 
-            Point[] bombPositionsInAtlas = [
-                new(1, 0), // Red
-                new(0, 0), // Green
-                new(0, 1), // Blue
-                new(2, 0), // Yellow
-                new(3, 0)  // Orange
-            ];
-
             LoadFromAtlas(_cellSize, bombPositionsInAtlas, _bombTextures, bonusesTexture);
 
-            Point[] horArrowsPositionsInAtlas = [
-                new(2, 1), // Red left
-                new(0, 3), // Green left
-                new(4, 3), // Blue left
-                new(0, 2), // Yellow left
-                new(4, 2), // Orange left
-                new(3, 1), // Red right
-                new(1, 3), // Green right
-                new(5, 3), // Blue right
-                new(1, 2), // Yellow right
-                new(5, 2)  // Orange right
-            ];
-
-            LoadFromAtlas(new Size(_cellSize.Width / 2, _cellSize.Height),
+            LoadFromAtlas(new Size(_cellSize.X / 2, _cellSize.Y),
                           horArrowsPositionsInAtlas,
                           _horArrowsTextures,
                           bonusesTexture);
 
-            Point[] verArrowsPositionsInAtlas = [
-                new(2, 2), // Red up
-                new(1, 6), // Green up
-                new(3, 6), // Blue up
-                new(0, 4), // Yellow up
-                new(3, 4), // Orange up
-                new(2, 3), // Red down
-                new(1, 7), // Green down
-                new(3, 7), // Blue down
-                new(0, 5), // Yellow down
-                new(3, 5)  // Orange down
-            ];
-
-            LoadFromAtlas(new Size(_cellSize.Width, _cellSize.Height / 2),
+            LoadFromAtlas(new Size(_cellSize.X, _cellSize.Y / 2),
                           verArrowsPositionsInAtlas,
                           _verArrowsTextures,
                           bonusesTexture);
@@ -120,39 +79,43 @@ namespace Match3.Core
             _gridHighlightedImage = new Bitmap(_gridHighlightedImage, _cellSize);
         }
 
-        private static void LoadFromAtlas(Size imageSize, Point[] points, List<Bitmap> images, Bitmap atlas)
+        private void LoadFromAtlas(Bitmap atlas, Vector2<int> atlasSize, Vector2<int>[] positions, List<Bitmap> images)
         {
-            for (int i = 0; i < points.Length; i++)
+            Size newAtlasSize = new (_cellSize.X * atlasSize.X, _cellSize.Y * atlasSize.X);
+            atlas = new Bitmap(atlas, newAtlasSize);
+            for (int i = 0; i < positions.Length; i++)
             {
-                Point position = new(imageSize.Width * points[i].X, imageSize.Height * points[i].Y);
-                Rectangle rectangle = new(position, imageSize);
+                Point position = new(_cellSize.X * positions[i].X, _cellSize.Y * positions[i].Y);
+                Rectangle rectangle = new(position.X, position.Y, _cellSize.X, _cellSize.Y);
                 images.Add(atlas.Clone(rectangle, atlas.PixelFormat));
             }
-
         }
 
 
         private void DrawGrid()
         {
             //IReadOnlyMap map = _game.Map; // Can be used to draw obstacle cells
-            Rectangle drawRect = new(new(0, 0), _cellSize);
+            Rectangle drawRect = new(0, 0, _cellSize.X, _cellSize.Y);
             for (int y = 0; y < 8; ++y)
             {
                 for (int x = 0; x < 8; ++x)
                 {
                     // Obstacle check here
-                    drawRect.Location = new(x * _cellSize.Width + _gridOffset.X,
-                                            y * _cellSize.Height + _gridOffset.Y);
-                    _graphics.DrawImage(_gridImage, drawRect);
+                    drawRect.Location = new(x * _cellSize.X + _gridOffset.X,
+                                            y * _cellSize.Y + _gridOffset.Y);
+                    _bufferedGraphics.Graphics.DrawImage(_gridTexture, drawRect);
                 }
             }
 
             if (_game.SelectedCell is not null)
             {
-                Vector2<int> position = _game.SelectedCell.Value;
-                drawRect.Location = new(position.X * _cellSize.Width + _gridOffset.X,
-                                        position.Y * _cellSize.Height + _gridOffset.Y);
-                _graphics.DrawImage(_gridHighlightedImage, drawRect);
+                Vector2<int>? position = _game.SelectedCell;
+                if (position is not null)
+                {
+                    drawRect.Location = new(position.Value.X * _cellSize.X + _gridOffset.X,
+                                            position.Value.Y * _cellSize.Y + _gridOffset.Y);
+                    _bufferedGraphics.Graphics.DrawImage(_selectedGridTexture, drawRect);
+                }
             }
         }
 
@@ -192,11 +155,11 @@ namespace Match3.Core
 
         private void DrawGem(int colorID, Vector2<float> position)
         {
-            Rectangle drawRect = new((int)(position.X * _cellSize.Width) + _gridOffset.X,
-                                     (int)(position.Y * _cellSize.Height) + _gridOffset.Y,
-                                     _cellSize.Width,
-                                     _cellSize.Height);
-            _graphics.DrawImage(_gemsTextures[colorID], drawRect);
+            Rectangle drawRect = new((int)(position.X * _cellSize.X) + _gridOffset.X,
+                                     (int)(position.Y * _cellSize.Y) + _gridOffset.Y,
+                                     _cellSize.X,
+                                     _cellSize.Y);
+            _bufferedGraphics.Graphics.DrawImage(_gemsTextures[colorID], drawRect);
         }
 
         private void DrawLineGem(IReadOnlyLineGem lineGem) =>
@@ -226,19 +189,19 @@ namespace Match3.Core
                 direction == Direction.Up ||
                 direction == Direction.Down;
             Rectangle drawRect = isVertical
-                ? new((int)(position.X * _cellSize.Width) + _gridOffset.X,
-                      (int)(position.Y * _cellSize.Height) + _gridOffset.Y,
-                      _cellSize.Width,
-                      _cellSize.Height / 2)
-                 : new((int)(position.X * _cellSize.Width) + _gridOffset.X,
-                       (int)(position.Y * _cellSize.Height) + _gridOffset.Y,
-                       _cellSize.Width / 2,
-                       _cellSize.Height);
+                ? new((int)(position.X * _cellSize.X) + _gridOffset.X,
+                      (int)(position.Y * _cellSize.Y) + _gridOffset.Y,
+                      _cellSize.X,
+                      _cellSize.Y / 2)
+                 : new((int)(position.X * _cellSize.X) + _gridOffset.X,
+                       (int)(position.Y * _cellSize.Y) + _gridOffset.Y,
+                       _cellSize.X / 2,
+                       _cellSize.Y);
 
             if (isVertical)
-                _graphics.DrawImage(_verArrowsTextures[colorID], drawRect);
+                _bufferedGraphics.Graphics.DrawImage(_verArrowsTextures[colorID], drawRect);
             else
-                _graphics.DrawImage(_horArrowsTextures[colorID], drawRect);
+                _bufferedGraphics.Graphics.DrawImage(_horArrowsTextures[colorID], drawRect);
         }
 
         private void DrawBombGem(IReadOnlyBombGem bombGem, int frame) =>
@@ -246,18 +209,18 @@ namespace Match3.Core
 
         private void DrawBombGem(int colorID, Vector2<float> position, float normalizedTimer)
         {
-            Rectangle drawRect = new((int)(position.X * _cellSize.Width) + _gridOffset.X,
-                                     (int)(position.Y * _cellSize.Height) + _gridOffset.Y,
-                                     _cellSize.Width,
-                                     _cellSize.Height);
-            _graphics.DrawImage(_bombTextures[colorID],
-                                drawRect,
-                                0,
-                                0,
-                                _cellSize.Width,
-                                _cellSize.Height,
-                                GraphicsUnit.Pixel,
-                                GetTransparentAttributes(1.0f - normalizedTimer));
+            Rectangle drawRect = new((int)(position.X * _cellSize.X) + _gridOffset.X,
+                                     (int)(position.Y * _cellSize.Y) + _gridOffset.Y,
+                                     _cellSize.X,
+                                     _cellSize.Y);
+            _bufferedGraphics.Graphics.DrawImage(_bombTextures[colorID],
+                                                 drawRect,
+                                                 0,
+                                                 0,
+                                                 _cellSize.X,
+                                                 _cellSize.Y,
+                                                 GraphicsUnit.Pixel,
+                                                 GetTransparentAttributes(1.0f - normalizedTimer));
         }
 
         private static ImageAttributes GetTransparentAttributes(float opacity)

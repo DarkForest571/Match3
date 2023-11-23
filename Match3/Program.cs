@@ -1,4 +1,5 @@
 using Match3.Core;
+using System.Numerics;
 
 namespace Match3
 {
@@ -23,7 +24,11 @@ namespace Match3
             timer.Interval = 1000 / physicalFrames;
             timer.Start();
 
-            _mainForm = new MainForm(_game);
+
+            Renderer renderer = new (_game, new(100,100), new(100,0));
+            InputHandler inputHandler = new (_game, new(100, 100), new(100, 0));
+
+            _mainForm = new MainForm(renderer, inputHandler);
             Application.Run(_mainForm);
         }
 
