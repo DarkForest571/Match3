@@ -43,8 +43,6 @@ namespace Match3.Core
         public void Init()
         {
             ResetCellSelection();
-            _map.InitMap();
-
             _map.InitGems();
         }
 
@@ -53,26 +51,26 @@ namespace Match3.Core
             _map.Update(_currentFrame++);
         }
 
-        public void SelectCell(int x, int y)
+        public void SelectCell(Vector2<int> position)
         {
             if (_map.SwapInProgress(_currentFrame) ||
-                !_map.InBounds(x, y) ||
-                _map.CellAt(x, y).IsStatic)
+                !_map.InBounds(position) ||
+                _map.GemAt(position) is null ||
+                !_map.GemAt(position).IsStatic)
             {
                 ResetCellSelection();
                 return;
             }
 
-            Vector2<int> newPosition = new(x, y);
             if (_selectedCell == null)
             {
-                _selectedCell = newPosition;
+                _selectedCell = position;
             }
             else
             {
-                if (_selectedCell.Value.IsNeighbor(new(x, y)))
+                if (_selectedCell.Value.IsNeighbor(position))
                 {
-                    _map.StartSwappingGems(_selectedCell.Value, newPosition, _currentFrame);
+                    _map.StartSwappingGems(_selectedCell.Value, position, _currentFrame);
                 }
                 ResetCellSelection();
             }

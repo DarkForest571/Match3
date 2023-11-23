@@ -26,9 +26,7 @@ namespace Match3.Core
             }
             else
             {
-                int x = position.X / _cellSize.X;
-                int y = position.Y / _cellSize.Y;
-                _game.SelectCell(x, y);
+                _game.SelectCell(new(position.X / _cellSize.X, position.Y / _cellSize.Y));
             }
         }
     }

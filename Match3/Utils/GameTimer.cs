@@ -5,7 +5,6 @@
         private int _startFrame;
         private int _endFrame;
         private readonly int _framesPerTick;
-        private bool _expired;
 
         public GameTimer(int framesPerTick)
         {
@@ -21,7 +20,7 @@
             _endFrame = frame + _framesPerTick;
         }
 
-        public bool IsActivated(int frame) => frame >= _startFrame && frame < _endFrame;
+        public bool IsActivated(int frame) => frame >= _startFrame && frame <= _endFrame;
 
         public bool IsExpired(int frame) => _endFrame != -1 && frame >= _endFrame;
 
@@ -31,7 +30,6 @@
         {
             _startFrame = -1;
             _endFrame = -1;
-            _expired = false;
         }
     }
 }
