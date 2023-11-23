@@ -1,11 +1,12 @@
-﻿using Match3.Utils;
+﻿using Match3.Core.GameObjects;
+using Match3.Utils;
 
 namespace Match3.Core
 {
-    public class CellSwapper
+    public class GemSwapper
     {
-        private Cell _firstCell;
-        private Cell _secondCell;
+        private Gem _firstGem;
+        private Gem _secondGem;
         private Vector2<int> _firstPosition;
         private Vector2<int> _secondPosition;
         private Vector2<float> _delta;
@@ -14,7 +15,7 @@ namespace Match3.Core
 
         private bool _isReverseSwapping;
 
-        public CellSwapper(int framesForSwap)
+        public GemSwapper(int framesForSwap)
         {
             _isReverseSwapping = false;
             _timer = new(framesForSwap);
@@ -28,9 +29,9 @@ namespace Match3.Core
 
         public bool IsSwapped(int frame) => _timer.IsExpired(frame);
 
-        public void InitSwap(Cell first, Cell second, Vector2<int> firstPosition, Vector2<int> secondPosition, int frame)
+        public void InitSwap(Gem first, Gem second, Vector2<int> firstPosition, Vector2<int> secondPosition, int frame)
         {
-            (_firstCell, _secondCell) = (first, second);
+            (_firstGem, _secondGem) = (first, second);
             (_firstPosition, _secondPosition) = (firstPosition, secondPosition);
             _delta = (secondPosition - firstPosition).ConvertTo<float>();
             _timer.StartTimer(frame);
@@ -41,7 +42,7 @@ namespace Match3.Core
         {
             if (_isReverseSwapping = !makeRow)
             {
-                (_firstCell, _secondCell) = (_secondCell, _firstCell);
+                (_firstPosition, _secondPosition) = (_secondPosition, _firstPosition);
                 _delta = -_delta;
                 _timer.StartTimer(frame);
             }
@@ -56,15 +57,11 @@ namespace Match3.Core
 
             float slerp = (float)(-Math.Cos(_timer.Normalized(frame) * Math.PI) + 1.0) / 2;
             Vector2<float> offset = _delta * slerp;
-            _firstCell.SetOffset(offset);
-            _firstCell.SetOffset(-offset);
+            _firstGem.Position = _firstPosition.ConvertTo<float>() + offset;
+            _secondGem.Position = _secondPosition.ConvertTo<float>() - offset;
 
             if (_timer.IsExpired(frame))
             {
-                _firstCell.SwapGems(_secondCell);
-                _firstCell.ResetOffset();
-                _secondCell.ResetOffset();
-
                 if (_isReverseSwapping)
                     _timer.ResetTimer();
             }
