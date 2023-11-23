@@ -162,6 +162,7 @@ namespace Match3
             {
                 for (int x = 0; x < 8; ++x)
                 {
+                    // Obstacle check here
                     drawRect.Location = new(x * _cellSize.Width + _gridOffset.X,
                                             y * _cellSize.Height + _gridOffset.Y);
                     _graphics.DrawImage(_gridImage, drawRect);
