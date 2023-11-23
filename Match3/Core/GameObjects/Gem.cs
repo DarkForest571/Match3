@@ -15,7 +15,7 @@ namespace Match3.Core.GameObjects
 
     public class Gem : GameObject, IReadOnlyGem
     {
-        private readonly Timer _timer;
+        private readonly GameTimer _timer;
 
         private Gem? _newGem;
 
@@ -24,11 +24,11 @@ namespace Match3.Core.GameObjects
                    Vector2<float> position = default) : base(colorID,
                                                              position)
         {
-            _timer = new Timer(framesBeforeExpired);
+            _timer = new (framesBeforeExpired);
             _newGem = null;
         }
 
-        protected int _framesBeforeExpired => _timer.FramesPerTick;
+        protected int FramesBeforeExpired => _timer.FramesPerTick;
 
         public bool IsActive(int frame) => _timer.IsActivated(frame);
 

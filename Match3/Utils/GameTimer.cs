@@ -1,13 +1,13 @@
-﻿namespace Match3.Core
+﻿namespace Match3.Utils
 {
-    public class Timer
+    public class GameTimer
     {
         private int _startFrame;
         private int _endFrame;
         private readonly int _framesPerTick;
         private bool _expired;
 
-        public Timer(int framesPerTick)
+        public GameTimer(int framesPerTick)
         {
             _framesPerTick = framesPerTick;
             ResetTimer();

@@ -39,7 +39,7 @@ namespace Match3.Core.GameObjects
         public LineGemType Type => _type;
 
         public override LineGem Clone() => new(ColorID,
-                                               _framesBeforeExpired,
+                                               FramesBeforeExpired,
                                                _type,
                                                Position);
     }

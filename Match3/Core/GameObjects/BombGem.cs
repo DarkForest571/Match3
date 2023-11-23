@@ -32,7 +32,7 @@ namespace Match3.Core.GameObjects
         public int ExplosionRadius => _explosionRadius;
 
         public override BombGem Clone() => new (ColorID,
-                                                _framesBeforeExpired,
+                                                FramesBeforeExpired,
                                                 _explosionRadius,
                                                 Position);
     }
