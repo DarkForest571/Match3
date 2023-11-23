@@ -14,7 +14,16 @@ namespace Match3
         static void Main()
         {
             int physicalFrames = 50;
-            _game = new(8, 8, physicalFrames);
+            float secondsPerFrame = 1f / physicalFrames;
+            GameSettings settings = new(physicalFrames,
+                                        secondsPerFrame,
+                                        physicalFrames / 4,
+                                        physicalFrames / 10,
+                                        physicalFrames / 4,
+                                        physicalFrames / 10,
+                                        secondsPerFrame);
+
+            _game = new(8, 8, settings);
             _game.Init();
 
             ApplicationConfiguration.Initialize();

@@ -33,40 +33,26 @@ namespace Match3.Core
 
         private readonly GemSwapper _gemSwapper;
 
-        private readonly int _framesForBomb;
-        private readonly int _framesForLine;
+        private readonly int _bombGemExpiredFrames;
+        private readonly int _lineGemExpiredFrames;
         private readonly float _destroyersAcceleration;
 
-        public Map(int x,
-                   int y,
-                   float gravity,
-                   int framesForSwap,
-                   int framesForBomb,
-                   int framesForLine)
+        public Map(int x, int y, GameSettings settings)
         {
-            _gravity = gravity;
+            _gravity = settings.Gravity;
             _size = new(x, y);
             _gems = [];
             _destroyers = [];
             _gemMatrix = new Gem[x, y];
             _spawnPositions = new Vector2<int>[x];
             _gemsForSpawn = [];
-            _gemSwapper = new GemSwapper(framesForSwap);
-            _framesForBomb = framesForBomb;
-            _framesForLine = framesForLine;
+            _gemSwapper = new GemSwapper(settings.FramesForSwap);
+            _bombGemExpiredFrames = settings.BombGemExpireFrames;
+            _lineGemExpiredFrames = settings.LineGemExpireFrames;
+            _destroyersAcceleration = settings.DestroyerAcceleration;
         }
 
-        public Map(Vector2<int> size,
-                   float gravity,
-                   int framesForSwap,
-                   int framesForBomb,
-                   int framesForLine) : this(size.X,
-                                             size.Y,
-                                             gravity,
-                                             framesForSwap,
-                                             framesForBomb,
-                                             framesForLine)
-        { }
+        public Map(Vector2<int> size, GameSettings settings) : this(size.X, size.Y, settings) { }
 
         public Vector2<int> Size => _size;
 
@@ -82,10 +68,10 @@ namespace Match3.Core
 
         public void StartSwappingGems(Vector2<int> first, Vector2<int> second, int frame) =>
             _gemSwapper.InitSwap(_gemMatrix[first.X, first.Y],
-                                  _gemMatrix[second.X, second.Y],
-                                  first,
-                                  second,
-                                  frame);
+                                 _gemMatrix[second.X, second.Y],
+                                 first,
+                                 second,
+                                 frame);
 
         public virtual void InitGems()
         {
@@ -114,7 +100,7 @@ namespace Match3.Core
             _gemsForSpawn = gems;
         }
 
-        public void Update(int frame) // Need to change function call ordering!!!
+        public void Update(int frame)
         {
             UpdateGemMatrix();
             AddGravityToGems(frame);
@@ -135,8 +121,10 @@ namespace Match3.Core
             }
 
             UpdateGems(frame);
+            UpdateDestroyers(frame);
 
             DestroyExpiredGems(frame);
+            DestroyDestroyersOuterBound();
         }
 
         private void UpdateGemMatrix()
@@ -186,6 +174,18 @@ namespace Match3.Core
             }
         }
 
+        private void UpdateDestroyers(int frame)
+        {
+            foreach (var destroyer in _destroyers)
+            {
+                destroyer.Update(frame);
+                Vector2<int> position = GetMatrixPosition(destroyer.Position);
+                if (InBounds(position) &&
+                    _gemMatrix[position.X, position.Y] is not null)
+                    _gemMatrix[position.X, position.Y]?.Activate(frame);
+            }
+        }
+
         private void DestroyExpiredGems(int frame)
         {
             List<Gem> newGems = [];
@@ -222,6 +222,13 @@ namespace Match3.Core
                 i--;
             }
             _gems.AddRange(newGems);
+        }
+
+        private void DestroyDestroyersOuterBound()
+        {
+            _destroyers.RemoveAll((destroyer) =>
+            !(destroyer.Position >= -Vector2<float>.One &&
+            destroyer.Position < _size.ConvertTo<float>() + Vector2<float>.One));
         }
 
         #region Check and activate row
@@ -322,11 +329,11 @@ namespace Match3.Core
         {
             if (rowSize.X == 5 || rowSize.Y == 5 ||
                 (rowSize.X >= 3 && rowSize.Y >= 3))
-                return new BombGem(gem, _framesForBomb, 1);
+                return new BombGem(gem, _bombGemExpiredFrames, 1);
             if (rowSize.X == 4)
-                return new LineGem(gem, _framesForLine, LineGemType.Vertical);
+                return new LineGem(gem, _lineGemExpiredFrames, LineGemType.Vertical);
             if (rowSize.Y == 4)
-                return new LineGem(gem, _framesForLine, LineGemType.Horizontal);
+                return new LineGem(gem, _lineGemExpiredFrames, LineGemType.Horizontal);
             return null;
         }
 
@@ -347,8 +354,8 @@ namespace Match3.Core
                     if (gem.Position.Y < _size.Y - 1)
                     {
                         gem.Velocity += new Vector2<float>(0.0f, _gravity);
-                        if (gem.Velocity.Y > 0.5f)
-                            gem.Velocity -= new Vector2<float>(0.0f, gem.Velocity.Y - 0.5f);
+                        if (gem.Velocity.Y > 0.4f)
+                            gem.Velocity -= new Vector2<float>(0.0f, gem.Velocity.Y - 0.4f);
                         continue;
                     }
                     else
@@ -366,8 +373,8 @@ namespace Match3.Core
                     gem.Position.Y - position.Y < 0.0f))
                 {
                     gem.Velocity += new Vector2<float>(0.0f, _gravity);
-                    if (gem.Velocity.Y > 0.5f)
-                        gem.Velocity -= new Vector2<float>(0.0f, gem.Velocity.Y - 0.5f);
+                    if (gem.Velocity.Y > 0.4f)
+                        gem.Velocity -= new Vector2<float>(0.0f, gem.Velocity.Y - 0.4f);
                 }
                 else if (gem.Position.Y - position.Y > 0.0f)
                 {
@@ -390,10 +397,8 @@ namespace Match3.Core
             return new((int)x, (int)y);
         }
 
-        public bool InBounds(int x, int y) =>
-            x >= 0 && y >= 0 &&
-            x < _size.X && y < _size.Y;
+        public bool InBounds(int x, int y) => InBounds(new(x, y));
 
-        public bool InBounds(Vector2<int> point) => InBounds(point.X, point.Y);
+        public bool InBounds(Vector2<int> position) => position >= Vector2<int>.Zero && position < _size;
     }
 }

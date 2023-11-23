@@ -1,9 +1,25 @@
 ﻿using Match3.Core.GameObjects;
 using Match3.Utils;
-using System.Diagnostics.Metrics;
 
 namespace Match3.Core
 {
+    public readonly struct GameSettings(int framesPerSecond,
+                                        float gravity,
+                                        int framesForSwap,
+                                        int gemExpireFrames,
+                                        int bombGemExpireFrames,
+                                        int lineGemExpireFrames,
+                                        float destroyerAcceleration)
+    {
+        public readonly int FramesPerSecond = framesPerSecond;
+        public readonly float Gravity = gravity;
+        public readonly int FramesForSwap = framesForSwap;
+        public readonly int GemExpireFrames = gemExpireFrames;
+        public readonly int BombGemExpireFrames = bombGemExpireFrames;
+        public readonly int LineGemExpireFrames = lineGemExpireFrames;
+        public readonly float DestroyerAcceleration = destroyerAcceleration;
+    }
+
     public class Game
     {
         private readonly Map _map;
@@ -12,21 +28,16 @@ namespace Match3.Core
 
         private int _currentFrame;
 
-        public Game(int xSize, int ySize, int physicalFrames)
+        public Game(int xSize, int ySize, GameSettings settings)
         {
-            float timePerFrame = 1f / physicalFrames;
-            int framesForSwap = physicalFrames / 4;
-            int framesForBomb = physicalFrames / 4;
-            int framesForLine = physicalFrames / 10;
-            _map = new Map(xSize, ySize, timePerFrame, framesForSwap, framesForBomb, framesForLine);
+            _map = new Map(xSize, ySize, settings);
 
-            int gemExpireFrames = physicalFrames / 10;
             _map.SetListOfGems([
-                new Gem(0, gemExpireFrames), // Red
-                new Gem(1, gemExpireFrames), // Green
-                new Gem(2, gemExpireFrames), // Blue
-                new Gem(3, gemExpireFrames), // Yellow
-                new Gem(4, gemExpireFrames)  // Orange
+                new Gem(0, settings.GemExpireFrames), // Red
+                new Gem(1, settings.GemExpireFrames), // Green
+                new Gem(2, settings.GemExpireFrames), // Blue
+                new Gem(3, settings.GemExpireFrames), // Yellow
+                new Gem(4, settings.GemExpireFrames)  // Orange
             ]);
 
             _currentFrame = 0;
