@@ -12,149 +12,53 @@
     </lineGemDestroyTime>
   </gemSettings>
   <images>
-    <gridImage path = "img\\ingame_grid.png" XStlasSize ="1" YAtlasSize ="1">
-      <grid>
-        <X>0</X>
-        <Y>0</Y>
-      </grid>
+    <gridImage path = "img\\ingame_grid.png" XStlasSize = "1" YAtlasSize = "1">
+      <grid X = "0" Y = "0"/>
     </gridImage>
-    <selectedGridImage path = "img\\ingame_grid_highlighted.png" XStlasSize ="1" YAtlasSize ="1">
-      <selectedGrid>
-        <X>0</X>
-        <Y>0</Y>
-      </selectedGrid>
+    <selectedGridImage path = "img\\ingame_grid_highlighted.png" XStlasSize = "1" YAtlasSize = "1">
+      <selectedGrid X = "0" Y = "0"/>
     </selectedGridImage>
-    <gemImage path = "img\\sprite_fruit_face_atlas_01.png" XStlasSize ="4" YAtlasSize ="4">
-      <gem>
-        <X>1</X>
-        <Y>0</Y>
-      </gem>
-      <gem>
-        <X>2</X>
-        <Y>0</Y>
-      </gem>
-      <gem>
-        <X>0</X>
-        <Y>1</Y>
-      </gem>
-      <gem>
-        <X>2</X>
-        <Y>1</Y>
-      </gem>
-      <gem>
-        <X>3</X>
-        <Y>2</Y>
-      </gem>
+    <gemImage path = "img\\sprite_fruit_face_atlas_01.png" XStlasSize = "4" YAtlasSize = "4">
+      <gem X = "1" Y = "0"/>
+      <gem X = "2" Y = "0"/>
+      <gem X = "0" Y = "1"/>
+      <gem X = "2" Y = "1"/>
+      <gem X = "3" Y = "2"/>
     </gemImage>
     <bombGemImage path = "img\\sprite_arrow_atlas.png" XStlasSize ="4" YAtlasSize ="4">
-      <bombGem>
-        <X>1</X>
-        <Y>0</Y>
-      </bombGem>
-      <bombGem>
-        <X>0</X>
-        <Y>0</Y>
-      </bombGem>
-      <bombGem>
-        <X>0</X>
-        <Y>1</Y>
-      </bombGem>
-      <bombGem>
-        <X>2</X>
-        <Y>0</Y>
-      </bombGem>
-      <bombGem>
-        <X>3</X>
-        <Y>0</Y>
-      </bombGem>
+      <bombGem X = "1" Y = "0"/>
+      <bombGem X = "0" Y = "0"/>
+      <bombGem X = "0" Y = "1"/>
+      <bombGem X = "2" Y = "0"/>
+      <bombGem X = "3" Y = "0"/>
     </bombGemImage>
     <arrowUpImage path = "img\\sprite_arrow_atlas.png" XStlasSize ="4" YAtlasSize ="8">
-      <lineGem>
-        <X>2</X>
-        <Y>2</Y>
-      </lineGem>
-      <lineGem>
-        <X>1</X>
-        <Y>6</Y>
-      </lineGem>
-      <lineGem>
-        <X>3</X>
-        <Y>6</Y>
-      </lineGem>
-      <lineGem>
-        <X>0</X>
-        <Y>4</Y>
-      </lineGem>
-      <lineGem>
-        <X>3</X>
-        <Y>4</Y>
-      </lineGem>
+      <lineGem X = "2" Y = "2"/>
+      <lineGem X = "1" Y = "6"/>
+      <lineGem X = "3" Y = "6"/>
+      <lineGem X = "0" Y = "4"/>
+      <lineGem X = "3" Y = "4"/>
     </arrowUpImage>
     <arrowDownImage path = "img\\sprite_arrow_atlas.png" XStlasSize ="4" YAtlasSize ="8">
-      <lineGem>
-        <X>2</X>
-        <Y>3</Y>
-      </lineGem>
-      <lineGem>
-        <X>1</X>
-        <Y>7</Y>
-      </lineGem>
-      <lineGem>
-        <X>3</X>
-        <Y>7</Y>
-      </lineGem>
-      <lineGem>
-        <X>0</X>
-        <Y>5</Y>
-      </lineGem>
-      <lineGem>
-        <X>3</X>
-        <Y>5</Y>
-      </lineGem>
+      <lineGem X = "2" Y = "3"/>
+      <lineGem X = "1" Y = "7"/>
+      <lineGem X = "3" Y = "7"/>
+      <lineGem X = "0" Y = "5"/>
+      <lineGem X = "3" Y = "5"/>
     </arrowDownImage>
     <arrowLeftImage path = "img\\sprite_arrow_atlas.png" XStlasSize ="8" YAtlasSize ="4">
-      <lineGem>
-        <X>2</X>
-        <Y>1</Y>
-      </lineGem>
-      <lineGem>
-        <X>0</X>
-        <Y>3</Y>
-      </lineGem>
-      <lineGem>
-        <X>4</X>
-        <Y>3</Y>
-      </lineGem>
-      <lineGem>
-        <X>0</X>
-        <Y>2</Y>
-      </lineGem>
-      <lineGem>
-        <X>4</X>
-        <Y>2</Y>
-      </lineGem>
+      <lineGem X = "2" Y = "1"/>
+      <lineGem X = "0" Y = "3"/>
+      <lineGem X = "4" Y = "3"/>
+      <lineGem X = "0" Y = "2"/>
+      <lineGem X = "4" Y = "2"/>
     </arrowLeftImage>
     <arrowRightImage path = "img\\sprite_arrow_atlas.png" XStlasSize ="8" YAtlasSize ="4">
-      <lineGem>
-        <X>3</X>
-        <Y>1</Y>
-      </lineGem>
-      <lineGem>
-        <X>1</X>
-        <Y>3</Y>
-      </lineGem>
-      <lineGem>
-        <X>5</X>
-        <Y>3</Y>
-      </lineGem>
-      <lineGem>
-        <X>1</X>
-        <Y>2</Y>
-      </lineGem>
-      <lineGem>
-        <X>5</X>
-        <Y>2</Y>
-      </lineGem>
+      <lineGem X = "3" Y = "1"/>
+      <lineGem X = "1" Y = "3"/>
+      <lineGem X = "5" Y = "3"/>
+      <lineGem X = "1" Y = "2"/>
+      <lineGem X = "5" Y = "2"/>
     </arrowRightImage>
   </images>
 </config>

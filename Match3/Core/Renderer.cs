@@ -1,6 +1,8 @@
 ﻿using Match3.Core.GameObjects;
 using Match3.Utils;
+using System.Collections.Generic;
 using System.Drawing.Imaging;
+using System.Xml;
 
 namespace Match3.Core
 {
@@ -13,10 +15,12 @@ namespace Match3.Core
         private Vector2<int> _cellSize;
         private Vector2<int> _gridOffset;
 
-        private readonly List<Bitmap> _gemsTextures;
-        private readonly List<Bitmap> _bombTextures;
-        private readonly List<Bitmap> _horArrowsTextures;
-        private readonly List<Bitmap> _verArrowsTextures;
+        private  List<Bitmap> _gemsTextures;
+        private  List<Bitmap> _bombTextures;
+        private  List<Bitmap> _upArrowsTextures;
+        private  List<Bitmap> _downArrowsTextures;
+        private  List<Bitmap> _leftArrowsTextures;
+        private  List<Bitmap> _rightArrowsTextures;
         private Bitmap _gridTexture;
         private Bitmap _selectedGridTexture;
 
@@ -29,8 +33,10 @@ namespace Match3.Core
 
             _gemsTextures = [];
             _bombTextures = [];
-            _horArrowsTextures = [];
-            _verArrowsTextures = [];
+            _upArrowsTextures = [];
+            _downArrowsTextures = [];
+            _leftArrowsTextures = [];
+            _rightArrowsTextures = [];
         }
 
         public void SetBufferedGraphics(BufferedGraphics bufferedGraphics)
@@ -53,37 +59,66 @@ namespace Match3.Core
 
         private void LoadTextures()
         {
-            Bitmap gemsTexture = new("..\\..\\..\\..\\img\\sprite_fruit_face_atlas_01.png");
-            gemsTexture = new(gemsTexture, 400, 400);
+            XmlReader reader = XmlReader.Create("..\\..\\..\\..\\config\\config.xml");
 
-            LoadFromAtlas(_cellSize, gemPositionsInAtlas, _gemsTextures, gemsTexture);
+            reader.MoveToContent();
+            reader.ReadStartElement();
+            reader.ReadToNextSibling("images");
 
-            Bitmap bonusesTexture = new("..\\..\\..\\..\\img\\sprite_arrow_atlas.png");
-            bonusesTexture = new(bonusesTexture, 400, 400);
+            Dictionary<string, List<Bitmap>> arraysOfImages = [];
+            for (int i = 0; i < 8; ++i)
+            {
+                reader.ReadStartElement();
+                reader.Read();
+                string tag = reader.Name;
 
-            LoadFromAtlas(_cellSize, bombPositionsInAtlas, _bombTextures, bonusesTexture);
+                // atlas parameters
+                reader.MoveToFirstAttribute();
+                string atlasPath = reader.Value;
+                reader.MoveToNextAttribute();
+                int xSize = Convert.ToInt32(reader.Value);
+                reader.MoveToNextAttribute();
+                int ySize = Convert.ToInt32(reader.Value);
+                Vector2<int> atlasSize = new(xSize, ySize);
 
-            LoadFromAtlas(new Size(_cellSize.X / 2, _cellSize.Y),
-                          horArrowsPositionsInAtlas,
-                          _horArrowsTextures,
-                          bonusesTexture);
+                reader.MoveToContent();
+                reader.ReadStartElement();
+                reader.Read();
 
-            LoadFromAtlas(new Size(_cellSize.X, _cellSize.Y / 2),
-                          verArrowsPositionsInAtlas,
-                          _verArrowsTextures,
-                          bonusesTexture);
+                List<Vector2<int>> positions = [];
+                while (reader.NodeType != XmlNodeType.EndElement)
+                {
+                    reader.MoveToFirstAttribute();
+                    int x = Convert.ToInt32(reader.Value);
+                    reader.MoveToNextAttribute();
+                    int y = Convert.ToInt32(reader.Value);
+                    positions.Add(new(x, y));
+                    reader.MoveToElement();
+                    reader.Read();
+                    reader.Read();
+                }
+                List<Bitmap> bitmaps = [];
+                LoadFromAtlas("..\\..\\..\\..\\" + atlasPath, atlasSize, positions, bitmaps);
+                arraysOfImages.Add(tag, bitmaps);
+            }
+            reader.Dispose();
 
-            _gridImage = new Bitmap("..\\..\\..\\..\\img\\ingame_grid.png");
-            _gridImage = new Bitmap(_gridImage, _cellSize);
-            _gridHighlightedImage = new Bitmap("..\\..\\..\\..\\img\\ingame_grid_highlighted.png");
-            _gridHighlightedImage = new Bitmap(_gridHighlightedImage, _cellSize);
+            _gridTexture = arraysOfImages["gridImage"][0];
+            _selectedGridTexture = arraysOfImages["selectedGridImage"][0];
+            _gemsTextures = arraysOfImages["gemImage"];
+            _bombTextures = arraysOfImages["bombGemImage"];
+            _upArrowsTextures = arraysOfImages["arrowUpImage"];
+            _downArrowsTextures = arraysOfImages["arrowDownImage"];
+            _leftArrowsTextures = arraysOfImages["arrowLeftImage"];
+            _rightArrowsTextures = arraysOfImages["arrowRightImage"];
         }
 
-        private void LoadFromAtlas(Bitmap atlas, Vector2<int> atlasSize, Vector2<int>[] positions, List<Bitmap> images)
+        private void LoadFromAtlas(string atlasPath, Vector2<int> atlasSize, List<Vector2<int>> positions, List<Bitmap> images)
         {
-            Size newAtlasSize = new (_cellSize.X * atlasSize.X, _cellSize.Y * atlasSize.X);
+            Bitmap atlas = new(atlasPath);
+            Size newAtlasSize = new(_cellSize.X * atlasSize.X, _cellSize.Y * atlasSize.X);
             atlas = new Bitmap(atlas, newAtlasSize);
-            for (int i = 0; i < positions.Length; i++)
+            for (int i = 0; i < positions.Count; i++)
             {
                 Point position = new(_cellSize.X * positions[i].X, _cellSize.Y * positions[i].Y);
                 Rectangle rectangle = new(position.X, position.Y, _cellSize.X, _cellSize.Y);
@@ -199,9 +234,9 @@ namespace Match3.Core
                        _cellSize.Y);
 
             if (isVertical)
-                _bufferedGraphics.Graphics.DrawImage(_verArrowsTextures[colorID], drawRect);
+                _bufferedGraphics.Graphics.DrawImage(_upArrowsTextures[colorID], drawRect);
             else
-                _bufferedGraphics.Graphics.DrawImage(_horArrowsTextures[colorID], drawRect);
+                _bufferedGraphics.Graphics.DrawImage(_downArrowsTextures[colorID], drawRect);
         }
 
         private void DrawBombGem(IReadOnlyBombGem bombGem, int frame) =>
