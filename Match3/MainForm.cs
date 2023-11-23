@@ -128,7 +128,7 @@ namespace Match3
             _graphics.Clear(Color.MidnightBlue);
 
             DrawGrid();
-            DrawGems();
+            DrawGems(_game.CurrentFrame);
             DrawDestroyers();
 
             _bufferedGraphics.Render();
@@ -156,93 +156,129 @@ namespace Match3
 
         private void DrawGrid()
         {
-            IReadOnlyMap map = _game.Map;
+            //IReadOnlyMap map = _game.Map; // Can be used to draw obstacle cells
             Rectangle drawRect = new(new(0, 0), _cellSize);
             for (int y = 0; y < 8; ++y)
             {
                 for (int x = 0; x < 8; ++x)
                 {
-                    if (map.CellAt(x, y) is not null)
-                    {
-                        drawRect.Location = new(x * _cellSize.Width + _gridOffset.X, y * _cellSize.Height + _gridOffset.Y);
-                        _graphics.DrawImage(_gridImage, drawRect);
-                    }
+                    drawRect.Location = new(x * _cellSize.Width + _gridOffset.X,
+                                            y * _cellSize.Height + _gridOffset.Y);
+                    _graphics.DrawImage(_gridImage, drawRect);
                 }
             }
 
             if (_game.SelectedCell is not null)
             {
                 Vector2<int> position = _game.SelectedCell.Value;
-                drawRect.Location = new(position.X * _cellSize.Width + _gridOffset.X, position.Y * _cellSize.Height + _gridOffset.Y);
+                drawRect.Location = new(position.X * _cellSize.Width + _gridOffset.X,
+                                        position.Y * _cellSize.Height + _gridOffset.Y);
                 _graphics.DrawImage(_gridHighlightedImage, drawRect);
             }
         }
 
-        private void DrawGems()
+        private void DrawGems(int frame)
         {
-            IReadOnlyMap map = _game.Map;
-            Rectangle drawRect = new(new(0, 0), _cellSize);
-            for (int y = 0; y < 8; ++y)
+            foreach (var gem in _game.Map.Gems)
             {
-                for (int x = 0; x < 8; ++x)
-                {
-                    IReadOnlyCell? cell = map.CellAt(x, y);
-                    if (cell is not null && cell.Gem is not null)
-                    {
-                        drawRect.Location = new((int)((x + cell.Offset.X) * _cellSize.Width) + _gridOffset.X,
-                            (int)((y + cell.Offset.Y) * _cellSize.Height) + _gridOffset.Y);
-                        switch (cell.Gem)
-                        {
-                            case BombGem bombGem:
-                                if (bombGem.IsActive(_game.CurrentFrame))
-                                {
-                                    _graphics.DrawImage(_bombTextures[cell.Gem.ColorID],
-                                                        drawRect,
-                                                        0,
-                                                        0,
-                                                        _cellSize.Width,
-                                                        _cellSize.Height,
-                                                        GraphicsUnit.Pixel,
-                                                        GetTransparentAttributes(1.0f - bombGem.NormalizedTimer(_game.CurrentFrame)));
-                                }
-                                else
-                                    _graphics.DrawImage(_bombTextures[cell.Gem.ColorID], drawRect);
-
-                                break;
-                            case LineGem lineGem:
-                                _graphics.DrawImage(_gemsTextures[cell.Gem.ColorID], drawRect);
-                                if (lineGem.Type == LineGemType.Vertical)
-                                {
-                                    Rectangle halfRect = new(drawRect.Location, new(drawRect.Width, drawRect.Height / 2));
-                                    _graphics.DrawImage(_verArrowsTextures[cell.Gem.ColorID], halfRect);
-                                    halfRect.Y += halfRect.Height;
-                                    _graphics.DrawImage(_verArrowsTextures[cell.Gem.ColorID + _verArrowsTextures.Count / 2], halfRect);
-                                }
-                                else
-                                {
-                                    Rectangle halfRect = new(drawRect.Location, new(drawRect.Width / 2, drawRect.Height));
-                                    _graphics.DrawImage(_horArrowsTextures[cell.Gem.ColorID], halfRect);
-                                    halfRect.X += halfRect.Width;
-                                    _graphics.DrawImage(_horArrowsTextures[cell.Gem.ColorID + _horArrowsTextures.Count / 2], halfRect);
-                                }
-                                break;
-                            default:
-                                _graphics.DrawImage(_gemsTextures[cell.Gem.ColorID], drawRect);
-                                break;
-                        }
-                    }
-                }
+                DrawGemByGemType(gem, frame);
             }
         }
 
         private void DrawDestroyers()
         {
-            List<Destroyer> destroyers = ((Map)_game.Map).Destroyers;
+            foreach (var destroyer in _game.Map.Destroyers)
+            {
+                DrawDestroyer(destroyer);
+            }
+        }
 
-            Rectangle horizontal = new(new(0, 0), new(_cellSize.Width, _cellSize.Height / 2));
-            Rectangle vertical = new(new(0, 0), new(_cellSize.Width / 2, _cellSize.Height));
+        private void DrawGemByGemType(IReadOnlyGem gem, int frame)
+        {
+            switch (gem)
+            {
+                case IReadOnlyBombGem bombGem:
+                    DrawBombGem(bombGem, frame);
+                    break;
+                case IReadOnlyLineGem lineGem:
+                    DrawLineGem(lineGem);
+                    break;
+                default:
+                    DrawGem(gem);
+                    break;
+            }
+        }
 
-            // TODO draw it
+        private void DrawGem(IReadOnlyGem gem) => DrawGem(gem.ColorID, gem.Position);
+
+        private void DrawGem(int colorID, Vector2<float> position)
+        {
+            Rectangle drawRect = new((int)(position.X * _cellSize.Width) + _gridOffset.X,
+                                     (int)(position.Y * _cellSize.Height) + _gridOffset.Y,
+                                     _cellSize.Width,
+                                     _cellSize.Height);
+            _graphics.DrawImage(_gemsTextures[colorID], drawRect);
+        }
+
+        private void DrawLineGem(IReadOnlyLineGem lineGem) =>
+            DrawLineGem(lineGem.ColorID, lineGem.Position, lineGem.Type);
+
+        private void DrawLineGem(int colorID, Vector2<float> position, LineGemType type)
+        {
+            DrawGem(colorID, position);
+            if (type == LineGemType.Vertical || type == LineGemType.Both)
+            {
+                DrawArrow(colorID, position, Direction.Up);
+                DrawArrow(colorID, position, Direction.Down);
+            }
+            if (type == LineGemType.Horizontal || type == LineGemType.Both)
+            {
+                DrawArrow(colorID, position, Direction.Left);
+                DrawArrow(colorID, position, Direction.Right);
+            }
+        }
+
+        private void DrawDestroyer(IReadOnlyDestroyer destroyer) =>
+            DrawArrow(destroyer.ColorID, destroyer.Position, destroyer.Direction);
+
+        private void DrawArrow(int colorID, Vector2<float> position, Direction direction)
+        {
+            bool isVertical =
+                direction == Direction.Up ||
+                direction == Direction.Down;
+            Rectangle drawRect = isVertical
+                ? new((int)(position.X * _cellSize.Width) + _gridOffset.X,
+                      (int)(position.Y * _cellSize.Height) + _gridOffset.Y,
+                      _cellSize.Width,
+                      _cellSize.Height / 2)
+                 : new((int)(position.X * _cellSize.Width) + _gridOffset.X,
+                       (int)(position.Y * _cellSize.Height) + _gridOffset.Y,
+                       _cellSize.Width / 2,
+                       _cellSize.Height);
+
+            if (isVertical)
+                _graphics.DrawImage(_verArrowsTextures[colorID], drawRect);
+            else
+                _graphics.DrawImage(_horArrowsTextures[colorID], drawRect);
+        }
+
+        private void DrawBombGem(IReadOnlyBombGem bombGem, int frame) =>
+            DrawBombGem(bombGem.ColorID, bombGem.Position, bombGem.NormalizedTimer(frame));
+
+        private void DrawBombGem(int colorID, Vector2<float> position, float normalizedTimer)
+        {
+            Rectangle drawRect = new((int)(position.X * _cellSize.Width) + _gridOffset.X,
+                                     (int)(position.Y * _cellSize.Height) + _gridOffset.Y,
+                                     _cellSize.Width,
+                                     _cellSize.Height);
+            _graphics.DrawImage(_bombTextures[colorID],
+                                drawRect,
+                                0,
+                                0,
+                                _cellSize.Width,
+                                _cellSize.Height,
+                                GraphicsUnit.Pixel,
+                                GetTransparentAttributes(1.0f - normalizedTimer));
         }
 
         private static ImageAttributes GetTransparentAttributes(float opacity)
