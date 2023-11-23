@@ -12,8 +12,8 @@ namespace Match3.Core.GameObjects
         private readonly int _explosionRadius;
 
         public BombGem(int colorID,
-                       int explosionRadius,
                        int framesBeforeExpired,
+                       int explosionRadius,
                        Vector2<float> position = default) : base(colorID,
                                                                  framesBeforeExpired,
                                                                  position)
@@ -21,20 +21,19 @@ namespace Match3.Core.GameObjects
             _explosionRadius = explosionRadius;
         }
 
-        public BombGem(IReadOnlyGem gem,
-                       int explosionRadius,
+        public BombGem(IReadOnlyGem parentGem,
                        int framesBeforeExpired,
-                       Vector2<float> position = default) : this(gem.ColorID,
-                                                                 explosionRadius,
-                                                                 framesBeforeExpired,
-                                                                 position)
+                       int explosionRadius) : this(parentGem.ColorID,
+                                                   framesBeforeExpired,
+                                                   explosionRadius,
+                                                   parentGem.Position)
         { }
 
         public int ExplosionRadius => _explosionRadius;
 
         public override BombGem Clone() => new (ColorID,
-                                                _explosionRadius,
                                                 _framesBeforeExpired,
+                                                _explosionRadius,
                                                 Position);
     }
 }

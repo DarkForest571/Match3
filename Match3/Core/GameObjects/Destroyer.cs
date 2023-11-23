@@ -22,6 +22,14 @@ namespace Match3.Core.GameObjects
             _acceleration = Vector2<float>.FromDirection(direction) * accelerationPerFrame;
         }
 
+        public Destroyer(IReadOnlyGem parentGem,
+                         Direction direction,
+                         float accelerationPerFrame) : this(parentGem.ColorID,
+                                                            direction,
+                                                            accelerationPerFrame,
+                                                            parentGem.Position)
+        { }
+
         public Direction Direction => _direction;
 
         public override Destroyer Clone()

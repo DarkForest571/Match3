@@ -19,8 +19,8 @@ namespace Match3.Core.GameObjects
         private readonly LineGemType _type;
 
         public LineGem(int colorID,
-                       LineGemType type,
                        int framesBeforeExpired,
+                       LineGemType type,
                        Vector2<float> position = default) : base(colorID,
                                                                  framesBeforeExpired,
                                                                  position)
@@ -28,20 +28,19 @@ namespace Match3.Core.GameObjects
             _type = type;
         }
 
-        public LineGem(IReadOnlyGem gem,
-                       LineGemType type,
+        public LineGem(IReadOnlyGem parentGem,
                        int framesBeforeExpired,
-                       Vector2<float> position = default) : this(gem.ColorID,
-                                                                 type,
-                                                                 framesBeforeExpired,
-                                                                 position)
+                       LineGemType type) : this(parentGem.ColorID,
+                                                framesBeforeExpired,
+                                                type,
+                                                parentGem.Position)
         { }
 
         public LineGemType Type => _type;
 
         public override LineGem Clone() => new(ColorID,
-                                               _type,
                                                _framesBeforeExpired,
+                                               _type,
                                                Position);
     }
 }

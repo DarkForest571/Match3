@@ -27,7 +27,11 @@ namespace Match3.Core.GameObjects
 
         public int ColorID => _colorID;
 
-        public Vector2<float> Position => _position;
+        public Vector2<float> Position
+        {
+            get => _position;
+            set => _position = value;
+        }
 
         public bool IsStatic => _velocity == Vector2<float>.Zero;
 

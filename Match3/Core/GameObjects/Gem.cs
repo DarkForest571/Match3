@@ -4,21 +4,18 @@ namespace Match3.Core.GameObjects
 {
     public interface IReadOnlyGem : IReadOnlyGameObject
     {
-        public bool IsActive { get; }
+        public bool IsActive(int frame);
 
-        public bool IsExpired { get; }
+        public bool IsExpired(int frame);
 
-        public float NormalizedTimer { get; }
+        public float NormalizedTimer(int frame);
 
         public bool Equals(IReadOnlyGem? second) => second is not null && ColorID == second.ColorID;
     }
 
     public class Gem : GameObject, IReadOnlyGem
     {
-        protected int _startFrame;
-        protected int _endFrame;
-        protected int _lastFrame;
-        protected readonly int _framesBeforeExpired;
+        private readonly Timer _timer;
 
         private Gem? _newGem;
 
@@ -27,33 +24,26 @@ namespace Match3.Core.GameObjects
                    Vector2<float> position = default) : base(colorID,
                                                              position)
         {
-            _framesBeforeExpired = framesBeforeExpired;
-            _startFrame = -1;
+            _timer = new Timer(framesBeforeExpired);
+            _newGem = null;
         }
 
-        public bool IsActive => _startFrame > -1;
+        protected int _framesBeforeExpired => _timer.FramesPerTick;
 
-        public bool IsExpired => IsActive && _lastFrame >= _endFrame;
+        public bool IsActive(int frame) => _timer.IsActivated(frame);
 
-        public float NormalizedTimer => (_lastFrame - _startFrame) / (float)_framesBeforeExpired;
+        public bool IsExpired(int frame) => _timer.IsExpired(frame);
+
+        public float NormalizedTimer(int frame) => _timer.NormalizedTimer(frame);
 
         public override Gem Clone() => new(ColorID,
-                                           _framesBeforeExpired,
+                                           _timer.FramesPerTick,
                                            Position);
 
         public virtual void Activate(int frame, Gem? newGem = null)
         {
-            _startFrame = frame;
-            _endFrame = frame + _framesBeforeExpired;
+            _timer.StartTimer(frame);
             _newGem = newGem;
-        }
-
-        public override void Update(int frame)
-        {
-            base.Update(frame);
-            if (!IsActive)
-                return;
-            _lastFrame = frame;
         }
 
         public Gem? Destroy()
