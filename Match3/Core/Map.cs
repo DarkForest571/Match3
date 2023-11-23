@@ -170,7 +170,8 @@ namespace Match3.Core
         {
             foreach (var gem in _gems)
             {
-                gem.Update(frame);
+                if (!gem.IsActive(frame)) // This line fix many bugs :/
+                    gem.Update(frame);
             }
         }
 
