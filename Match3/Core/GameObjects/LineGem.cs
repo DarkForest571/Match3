@@ -14,7 +14,7 @@ namespace Match3.Core.GameObjects
         public LineGemType Type { get; }
     }
 
-    public class LineGem : Gem
+    public class LineGem : Gem, IReadOnlyLineGem
     {
         private readonly LineGemType _type;
 

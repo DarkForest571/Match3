@@ -105,6 +105,8 @@ namespace Match3.Core
                     _gems.Add(gem);
                 }
             }
+            for (int x = 0; x < _size.X; x++)
+                _spawnPositions[x] = new(x, 0);
         }
 
         public void SetListOfGems(List<Gem> gems)
@@ -116,7 +118,7 @@ namespace Match3.Core
         {
             UpdateGemMatrix();
             AddGravityToGems(frame);
-            //SpawnGems();
+            SpawnGems();
 
             _gemSwapper.Update(frame);
             if (_gemSwapper.IsSwapped(frame))
@@ -132,9 +134,9 @@ namespace Match3.Core
                     ActivateRowAt(_gemSwapper.SecondPosition, frame);
             }
 
-            DestroyExpiredGems(frame);
-
             UpdateGems(frame);
+
+            DestroyExpiredGems(frame);
         }
 
         private void UpdateGemMatrix()
@@ -219,6 +221,7 @@ namespace Match3.Core
                 _gems.Remove(gem);
                 i--;
             }
+            _gems.AddRange(newGems);
         }
 
         #region Check and activate row
@@ -319,7 +322,7 @@ namespace Match3.Core
         {
             if (rowSize.X == 5 || rowSize.Y == 5 ||
                 (rowSize.X >= 3 && rowSize.Y >= 3))
-                return new BombGem(gem, 1, _framesForBomb);
+                return new BombGem(gem, _framesForBomb, 1);
             if (rowSize.X == 4)
                 return new LineGem(gem, _framesForLine, LineGemType.Vertical);
             if (rowSize.Y == 4)
@@ -331,31 +334,48 @@ namespace Match3.Core
         {
             foreach (var gem in _gems)
             {
-                if (gem.IsActive(frame))
+                Vector2<int> position = GetMatrixPosition(gem.Position);
+                if (gem.IsActive(frame) ||
+                    (_gemSwapper.IsActive(frame) &&
+                    (position == _gemSwapper.FirstPosition ||
+                    position == _gemSwapper.SecondPosition)))
                     continue;
 
-                Vector2<int> position = GetMatrixPosition(gem.Position);
-                if (position.Y >= _size.Y)
-                    position.Y = _size.Y - 1;
                 int bottomY = position.Y + 1;
                 if (bottomY == _size.Y) // Last row
                 {
                     if (gem.Position.Y < _size.Y - 1)
                     {
-                        gem.AddVelocity(new(0.0f, _gravity));
+                        gem.Velocity += new Vector2<float>(0.0f, _gravity);
+                        if (gem.Velocity.Y > 0.5f)
+                            gem.Velocity -= new Vector2<float>(0.0f, gem.Velocity.Y - 0.5f);
                         continue;
                     }
                     else
                     {
                         gem.Position = position.ConvertTo<float>();
                         gem.SetStatic();
+                        if (CheckRowAt(position))
+                            ActivateRowAt(position, frame);
                         continue;
                     }
                 }
 
                 if (_gemMatrix[position.X, bottomY] is null ||
-                    !_gemMatrix[position.X, bottomY].IsStatic)
-                    gem.AddVelocity(new(0.0f, _gravity)); // TODO Need to check falling combo
+                    (_gemMatrix[position.X, bottomY].IsStatic &&
+                    gem.Position.Y - position.Y < 0.0f))
+                {
+                    gem.Velocity += new Vector2<float>(0.0f, _gravity);
+                    if (gem.Velocity.Y > 0.5f)
+                        gem.Velocity -= new Vector2<float>(0.0f, gem.Velocity.Y - 0.5f);
+                }
+                else if (gem.Position.Y - position.Y > 0.0f)
+                {
+                    gem.Position = position.ConvertTo<float>();
+                    gem.SetStatic();
+                    if (CheckRowAt(position))
+                        ActivateRowAt(position, frame);
+                }
             }
         }
 

@@ -8,6 +8,8 @@ namespace Match3.Core.GameObjects
 
         public Vector2<float> Position { get; }
 
+        public Vector2<float> Velocity { get; }
+
         public bool IsStatic { get; }
     }
 
@@ -33,6 +35,12 @@ namespace Match3.Core.GameObjects
             set => _position = value;
         }
 
+        public Vector2<float> Velocity
+        {
+            get => _velocity;
+            set => _velocity = value;
+        }
+
         public bool IsStatic => _velocity == Vector2<float>.Zero;
 
         public abstract GameObject Clone();
@@ -40,11 +48,6 @@ namespace Match3.Core.GameObjects
         public virtual void Update(int frame)
         {
             _position += _velocity;
-        }
-
-        public void AddVelocity(Vector2<float> acceleration)
-        {
-            _velocity += acceleration;
         }
 
         public void SetStatic()

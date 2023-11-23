@@ -6,7 +6,7 @@ namespace Match3.Core
 {
     public class Game
     {
-        private Map _map;
+        private readonly Map _map;
 
         private Vector2<int>? _selectedCell;
 

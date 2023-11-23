@@ -90,7 +90,7 @@ namespace Match3.Core
                 Vector2<int> imageSize = tag switch
                 {
                     "arrowUpImage" or "arrowDownImage" => new(_cellSize.X, _cellSize.Y / 2),
-                    "arrowLeftImage" or "arrowRightImage" => new (_cellSize.X / 2, _cellSize.Y),
+                    "arrowLeftImage" or "arrowRightImage" => new(_cellSize.X / 2, _cellSize.Y),
                     _ => new(_cellSize.X, _cellSize.Y)
                 };
                 LoadFromAtlas("..\\..\\..\\..\\" + atlasPath, atlasSize, imageSize, positions, bitmaps);
@@ -232,11 +232,23 @@ namespace Match3.Core
                        (int)(position.Y * _cellSize.Y) + _gridOffset.Y,
                        _cellSize.X / 2,
                        _cellSize.Y);
-
-            if (isVertical)
-                _bufferedGraphics.Graphics.DrawImage(_upArrowsTextures[colorID], drawRect);
-            else
-                _bufferedGraphics.Graphics.DrawImage(_downArrowsTextures[colorID], drawRect);
+            switch (direction)
+            {
+                case Direction.Up:
+                    _bufferedGraphics.Graphics.DrawImage(_upArrowsTextures[colorID], drawRect);
+                    break;
+                case Direction.Down:
+                    drawRect.Y += _cellSize.Y / 2;
+                    _bufferedGraphics.Graphics.DrawImage(_downArrowsTextures[colorID], drawRect);
+                    break;
+                case Direction.Left:
+                    _bufferedGraphics.Graphics.DrawImage(_leftArrowsTextures[colorID], drawRect);
+                    break;
+                case Direction.Right:
+                    drawRect.X += _cellSize.X / 2;
+                    _bufferedGraphics.Graphics.DrawImage(_rightArrowsTextures[colorID], drawRect);
+                    break;
+            }
         }
 
         private void DrawBombGem(IReadOnlyBombGem bombGem, int frame) =>
@@ -244,6 +256,7 @@ namespace Match3.Core
 
         private void DrawBombGem(int colorID, Vector2<float> position, float normalizedTimer)
         {
+            normalizedTimer -= 1;
             Rectangle drawRect = new((int)(position.X * _cellSize.X) + _gridOffset.X,
                                      (int)(position.Y * _cellSize.Y) + _gridOffset.Y,
                                      _cellSize.X,

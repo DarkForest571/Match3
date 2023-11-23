@@ -44,7 +44,7 @@ namespace Match3.Core.GameObjects
 
         public override void Update(int frame)
         {
-            AddVelocity(_acceleration);
+            Velocity += _acceleration;
             base.Update(frame);
         }
     }
