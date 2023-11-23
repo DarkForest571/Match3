@@ -36,6 +36,8 @@ namespace Match3.Core.GameObjects
 
         public float NormalizedTimer(int frame) => _timer.Normalized(frame);
 
+        public Gem? NewGem => _newGem;
+
         public override Gem Clone() => new(ColorID,
                                            _timer.FramesPerTick,
                                            Position);
@@ -44,11 +46,6 @@ namespace Match3.Core.GameObjects
         {
             _timer.StartTimer(frame);
             _newGem = newGem;
-        }
-
-        public Gem? Destroy()
-        {
-            return _newGem;
         }
     }
 }
