@@ -1,6 +1,5 @@
 ﻿using Match3.Core.GameObjects;
 using Match3.Utils;
-using System.Numerics;
 
 namespace Match3.Core
 {
@@ -8,7 +7,9 @@ namespace Match3.Core
     {
         public Vector2<int> Size { get; }
 
-        public IReadOnlyCell CellAt(int x, int y);
+        public IReadOnlyGem? GemAt(Vector2<int> position);
+
+        public IReadOnlyGem? GemAt(int x, int y);
 
         public IReadOnlyCollection<IReadOnlyGem> Gems { get; }
 
@@ -25,12 +26,12 @@ namespace Match3.Core
 
         private readonly List<Gem> _gems;
         private readonly List<Destroyer> _destroyers;
-        private readonly Cell[,] _cellMatrix;
+        private readonly Gem?[,] _gemMatrix;
 
-        private readonly Vector2<int>[] _spawnCellPositions;
+        private readonly Vector2<int>[] _spawnPositions;
         private List<Gem> _gemsForSpawn;
 
-        private readonly CellSwapper _cellSwapper;
+        private readonly GemSwapper _gemSwapper;
 
         private readonly int _framesForBomb;
         private readonly int _framesForLine;
@@ -47,10 +48,10 @@ namespace Match3.Core
             _size = new(x, y);
             _gems = [];
             _destroyers = [];
-            _cellMatrix = new Cell[x, y];
-            _spawnCellPositions = [];
+            _gemMatrix = new Gem[x, y];
+            _spawnPositions = new Vector2<int>[x];
             _gemsForSpawn = [];
-            _cellSwapper = new CellSwapper(framesForSwap);
+            _gemSwapper = new GemSwapper(framesForSwap);
             _framesForBomb = framesForBomb;
             _framesForLine = framesForLine;
         }
@@ -69,35 +70,22 @@ namespace Match3.Core
 
         public Vector2<int> Size => _size;
 
-        public IReadOnlyCell CellAt(int x, int y) => _cellMatrix[x, y];
+        public IReadOnlyGem? GemAt(Vector2<int> position) => _gemMatrix[position.X, position.Y];
+
+        public IReadOnlyGem? GemAt(int x, int y) => _gemMatrix[x, y];
 
         public IReadOnlyCollection<IReadOnlyGem> Gems => _gems;
 
         public IReadOnlyCollection<IReadOnlyDestroyer> Destroyers => _destroyers;
 
-        public bool SwapInProgress(int frame) => _cellSwapper.IsActive(frame);
+        public bool SwapInProgress(int frame) => _gemSwapper.IsActive(frame);
 
-        public void StartSwappingGems(Vector2<int> first, Vector2<int> second, int frame)
-        {
-            _cellSwapper.InitSwap(_cellMatrix[first.X, first.Y],
-                                 _cellMatrix[second.X, second.Y],
-                                 first,
-                                 second,
-                                 frame);
-        }
-
-        public virtual void InitMap()
-        {
-            for (int y = 0; y < _size.Y; ++y)
-            {
-                for (int x = 0; x < _size.X; ++x)
-                {
-                    _cellMatrix[x, y] = new Cell();
-                }
-            }
-            for (int x = 0; x < _size.X; ++x)
-                _spawnCellPositions[x] = new(x, 0);
-        }
+        public void StartSwappingGems(Vector2<int> first, Vector2<int> second, int frame) =>
+            _gemSwapper.InitSwap(_gemMatrix[first.X, first.Y],
+                                  _gemMatrix[second.X, second.Y],
+                                  first,
+                                  second,
+                                  frame);
 
         public virtual void InitGems()
         {
@@ -111,9 +99,8 @@ namespace Match3.Core
                     {
                         choice = Random.Shared.Next(_gemsForSpawn.Count);
                         gem = _gemsForSpawn[choice].Clone();
-                        _cellMatrix[x, y].SetGem(gem);
+                        _gemMatrix[x, y] = gem;
                     } while (CheckRowAt(x, y, true));
-                    _cellMatrix[x, y].ResetOffset();
                     gem.Position = new(x, y);
                     _gems.Add(gem);
                 }
@@ -127,40 +114,62 @@ namespace Match3.Core
 
         public void Update(int frame) // Need to change function call ordering!!!
         {
-            ApplyGravityToGems(frame); // To end
-            SpawnGems();
+            UpdateGemMatrix();
+            AddGravityToGems(frame);
+            //SpawnGems();
 
-            _cellSwapper.Update(frame);
-            if (_cellSwapper.IsSwapped(frame))
+            _gemSwapper.Update(frame);
+            if (_gemSwapper.IsSwapped(frame))
             {
-                bool first = CheckRowAt(_cellSwapper.FirstPosition);
-                bool second = CheckRowAt(_cellSwapper.SecondPosition);
+                bool first = CheckRowAt(_gemSwapper.FirstPosition);
+                bool second = CheckRowAt(_gemSwapper.SecondPosition);
 
-                _cellSwapper.Finish(first || second, frame);
+                _gemSwapper.Finish(first || second, frame);
 
                 if (first)
-                    ActivateRowAt(_cellSwapper.FirstPosition, frame);
+                    ActivateRowAt(_gemSwapper.FirstPosition, frame);
                 if (second)
-                    ActivateRowAt(_cellSwapper.SecondPosition, frame);
+                    ActivateRowAt(_gemSwapper.SecondPosition, frame);
             }
 
-            UpdateGems(frame);
-
             DestroyExpiredGems(frame);
+
+            UpdateGems(frame);
+        }
+
+        private void UpdateGemMatrix()
+        {
+            for (int y = 0; y < _size.Y; ++y)
+                for (int x = 0; x < _size.X; ++x)
+                    _gemMatrix[x, y] = null;
+
+            foreach (var gem in _gems)
+            {
+                Vector2<int> position = GetMatrixPosition(gem.Position);
+                if (_gemMatrix[position.X, position.Y] is null)
+                    _gemMatrix[position.X, position.Y] = gem;
+                else
+                {
+                    position = GetMatrixPosition(gem.Position - Vector2<float>.One * 0.001f);
+                    if (_gemMatrix[position.X, position.Y] is null)
+                        _gemMatrix[position.X, position.Y] = gem;
+                    else
+                        throw new Exception();
+                }
+            }
         }
 
         private void SpawnGems()
         {
-            foreach (var position in _spawnCellPositions)
+            foreach (var position in _spawnPositions)
             {
-                if (_cellMatrix[position.X, position.Y].Gem is null)
+                if (_gemMatrix[position.X, position.Y] is null)
                 {
                     int choice;
                     choice = Random.Shared.Next(_gemsForSpawn.Count);
                     Gem gem = _gemsForSpawn[choice].Clone();
                     Vector2<float> offset = new(0.0f, -0.5f); // Instead add line above map and set new gems in it
-                    _cellMatrix[position.X, position.Y].SetGem(gem);
-                    _cellMatrix[position.X, position.X].SetOffset(offset);
+                    _gemMatrix[position.X, position.Y] = gem;
                     gem.Position = position.ConvertTo<float>() + offset;
                     _gems.Add(gem);
                 }
@@ -177,16 +186,18 @@ namespace Match3.Core
 
         private void DestroyExpiredGems(int frame)
         {
-
-            foreach (var gem in _gems)
+            List<Gem> newGems = [];
+            for (int i = 0; i < _gems.Count; i++)
             {
+                Gem gem = _gems[i];
                 if (!gem.IsExpired(frame))
                     continue;
                 switch (gem)
                 {
                     case BombGem bombGem:
+                        Vector2<int> position = GetMatrixPosition(bombGem.Position);
                         Vector2<int> delta = new(bombGem.ExplosionRadius, bombGem.ExplosionRadius);
-                        ActivateArea(bombGem.Position - delta, bombGem.Position + delta, frame);
+                        ActivateArea(position - delta, position + delta, frame);
                         break;
                     case LineGem lineGem:
                         if (lineGem.Type == LineGemType.Vertical || lineGem.Type == LineGemType.Both)
@@ -203,18 +214,21 @@ namespace Match3.Core
                     default:
                         break;
                 }
-                _cellMatrix[x, y].DestroyGem();
+                if (gem.NewGem is not null)
+                    newGems.Add(gem.NewGem);
+                _gems.Remove(gem);
+                i--;
             }
         }
 
         #region Check and activate row
 
-        public bool CheckRowAt(Vector2<int> position, bool checkDynamic = false) =>
+        private bool CheckRowAt(Vector2<int> position, bool checkDynamic = false) =>
             CheckRowAt(position.X, position.Y, checkDynamic);
 
-        public bool CheckRowAt(int x, int y, bool checkDynamic = false)
+        private bool CheckRowAt(int x, int y, bool checkDynamic = false)
         {
-            IReadOnlyGem? gem = _cellMatrix[x, y].Gem;
+            IReadOnlyGem? gem = _gemMatrix[x, y];
             if (gem is null)
                 return false;
 
@@ -225,7 +239,7 @@ namespace Match3.Core
 
         private Vector2<int> RowSizeAt(int x, int y, bool checkDynamic = false)
         {
-            IReadOnlyGem? gem = _cellMatrix[x, y].Gem ?? throw new InvalidOperationException();
+            IReadOnlyGem? gem = _gemMatrix[x, y] ?? throw new InvalidOperationException();
             Vector2<int> rowSize = Vector2<int>.One;
 
             foreach (var delta in Vector2<int>.AllDirections)
@@ -236,8 +250,9 @@ namespace Match3.Core
                 {
                     observer += delta;
                     if (InBounds(observer) &&
-                        gem.Equals(_cellMatrix[observer.X, observer.Y].Gem) &&
-                        (_cellMatrix[observer.X, observer.Y].IsStatic || checkDynamic))
+                        gem.Equals(_gemMatrix[observer.X, observer.Y]) &&
+                        _gemMatrix[observer.X, observer.Y] is not null &&
+                        (_gemMatrix[observer.X, observer.Y].IsStatic || checkDynamic))
                     {
                         if (delta.X != 0)
                             rowSize.X++;
@@ -251,12 +266,12 @@ namespace Match3.Core
             return rowSize;
         }
 
-        public void ActivateRowAt(Vector2<int> position, int frame) =>
+        private void ActivateRowAt(Vector2<int> position, int frame) =>
             ActivateRowAt(position.X, position.Y, frame);
 
-        public void ActivateRowAt(int x, int y, int frame)
+        private void ActivateRowAt(int x, int y, int frame)
         {
-            IReadOnlyGem? gem = _cellMatrix[x, y].Gem ?? throw new InvalidOperationException();
+            IReadOnlyGem? gem = _gemMatrix[x, y] ?? throw new InvalidOperationException();
             Vector2<int> rowSize = RowSizeAt(x, y);
 
             foreach (var delta in Vector2<int>.AllDirections)
@@ -270,16 +285,32 @@ namespace Match3.Core
                 {
                     observer += delta;
                     if (InBounds(observer) &&
-                        _cellMatrix[observer.X, observer.Y].IsStatic &&
-                        gem.Equals(_cellMatrix[observer.X, observer.Y].Gem))
+                        _gemMatrix[observer.X, observer.Y] is not null &&
+                        _gemMatrix[observer.X, observer.Y].IsStatic &&
+                        gem.Equals(_gemMatrix[observer.X, observer.Y]))
                     {
-                        _cellMatrix[observer.X, observer.Y].ActivateGem(frame);
+                        _gemMatrix[observer.X, observer.Y].Activate(frame);
                     }
                     else
                         break;
                 }
             }
-            _cellMatrix[x, y].ActivateGem(frame, CalcBonus(gem, rowSize));
+            _gemMatrix[x, y].Activate(frame, CalcBonus(gem, rowSize));
+        }
+
+        private void ActivateArea(Vector2<int> upperLeft, Vector2<int> bottomRight, int frame)
+        {
+            if (upperLeft > bottomRight)
+                throw new InvalidOperationException();
+
+            for (int y = upperLeft.Y; y <= bottomRight.Y; ++y)
+            {
+                for (int x = upperLeft.X; x <= bottomRight.X; ++x)
+                {
+                    if (InBounds(x, y) && _gemMatrix[x, y] is not null)
+                        _gemMatrix[x, y].Activate(frame);
+                }
+            }
         }
 
         #endregion
@@ -296,59 +327,47 @@ namespace Match3.Core
             return null;
         }
 
-        private void ActivateArea(Vector2<int> upperLeft, Vector2<int> bottomRight, int frame)
-        { // TODO Bug Bomb spawn other bonus, that is die immediately
-            if (upperLeft > bottomRight)
-                throw new InvalidOperationException();
-
-            for (int y = upperLeft.Y; y <= bottomRight.Y; ++y)
-            {
-                for (int x = upperLeft.X; x <= bottomRight.X; ++x)
-                {
-                    if (InBounds(x, y))
-                        _cellMatrix[x, y].ActivateGem(frame);
-                }
-            }
-        }
-
-        private void ApplyGravityToGems(int frame)
+        private void AddGravityToGems(int frame)
         {
             foreach (var gem in _gems)
             {
                 if (gem.IsActive(frame))
-                    return;
+                    continue;
 
-                int bottomX = y + 1;
-                if (bottomX == _size.Y || !_cellMatrix[x, bottomX].GemIsFalling)
+                Vector2<int> position = GetMatrixPosition(gem.Position);
+                if (position.Y >= _size.Y)
+                    position.Y = _size.Y - 1;
+                int bottomY = position.Y + 1;
+                if (bottomY == _size.Y) // Last row
                 {
-                    if (!cell.GemIsFalling)
-                        return;
-
-                    cell.ApplyGravity(_gravity);
-                    if (cell.YOffset >= 0.0f)
+                    if (gem.Position.Y < _size.Y - 1)
                     {
-                        cell.ResetVelocity();
-                        cell.ResetOffset();
-                        if (CheckRowAt(x, y))
-                            ActivateRowAt(x, y, frame);
+                        gem.AddVelocity(new(0.0f, _gravity));
+                        continue;
                     }
-                    return;
-                }
-
-                Cell bottomCell = _cellMatrix[x, y + 1];
-                cell.ApplyGravity(_gravity);
-                if (cell.YOffset > 0.5f)
-                {
-                    if (bottomCell.Gem is null)
-                        cell.MoveGemTo(bottomCell, Direction.Down);
                     else
                     {
-                        cell.ResetVelocity();
-                        if (!bottomCell.GemIsFalling)
-                            cell.ResetOffset();
+                        gem.Position = position.ConvertTo<float>();
+                        gem.SetStatic();
+                        continue;
                     }
                 }
+
+                if (_gemMatrix[position.X, bottomY] is null ||
+                    !_gemMatrix[position.X, bottomY].IsStatic)
+                    gem.AddVelocity(new(0.0f, _gravity)); // TODO Need to check falling combo
             }
+        }
+
+        private static Vector2<int> GetMatrixPosition(Vector2<float> position)
+        {
+            double x = Math.Floor(position.X);
+            if (position.X - x >= 0.5)
+                x = Math.Ceiling(position.X);
+            double y = Math.Floor(position.Y);
+            if (position.Y - y >= 0.5)
+                y = Math.Ceiling(position.Y);
+            return new((int)x, (int)y);
         }
 
         public bool InBounds(int x, int y) =>
