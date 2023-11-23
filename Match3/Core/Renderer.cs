@@ -3,6 +3,7 @@ using Match3.Utils;
 using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace Match3.Core
 {
@@ -15,12 +16,12 @@ namespace Match3.Core
         private Vector2<int> _cellSize;
         private Vector2<int> _gridOffset;
 
-        private  List<Bitmap> _gemsTextures;
-        private  List<Bitmap> _bombTextures;
-        private  List<Bitmap> _upArrowsTextures;
-        private  List<Bitmap> _downArrowsTextures;
-        private  List<Bitmap> _leftArrowsTextures;
-        private  List<Bitmap> _rightArrowsTextures;
+        private List<Bitmap> _gemsTextures;
+        private List<Bitmap> _bombTextures;
+        private List<Bitmap> _upArrowsTextures;
+        private List<Bitmap> _downArrowsTextures;
+        private List<Bitmap> _leftArrowsTextures;
+        private List<Bitmap> _rightArrowsTextures;
         private Bitmap _gridTexture;
         private Bitmap _selectedGridTexture;
 
@@ -37,6 +38,8 @@ namespace Match3.Core
             _downArrowsTextures = [];
             _leftArrowsTextures = [];
             _rightArrowsTextures = [];
+
+            LoadTextures();
         }
 
         public void SetBufferedGraphics(BufferedGraphics bufferedGraphics)
@@ -61,44 +64,36 @@ namespace Match3.Core
         {
             XmlReader reader = XmlReader.Create("..\\..\\..\\..\\config\\config.xml");
 
-            reader.MoveToContent();
-            reader.ReadStartElement();
-            reader.ReadToNextSibling("images");
+            while (reader.NodeType != XmlNodeType.Element)
+                reader.Read();
+            XElement imagesInfo = XElement.Load(reader);
+            imagesInfo = imagesInfo.Elements().ElementAt(1);
 
             Dictionary<string, List<Bitmap>> arraysOfImages = [];
-            for (int i = 0; i < 8; ++i)
+            foreach (var elementOfType in imagesInfo.Elements())
             {
-                reader.ReadStartElement();
-                reader.Read();
-                string tag = reader.Name;
+                var attributes = elementOfType.Attributes();
+                string tag = elementOfType.Name.LocalName;
 
-                // atlas parameters
-                reader.MoveToFirstAttribute();
-                string atlasPath = reader.Value;
-                reader.MoveToNextAttribute();
-                int xSize = Convert.ToInt32(reader.Value);
-                reader.MoveToNextAttribute();
-                int ySize = Convert.ToInt32(reader.Value);
-                Vector2<int> atlasSize = new(xSize, ySize);
-
-                reader.MoveToContent();
-                reader.ReadStartElement();
-                reader.Read();
+                string atlasPath = attributes.ElementAt(0).Value;
+                Vector2<int> atlasSize = new(Convert.ToInt32(attributes.ElementAt(1).Value),
+                                             Convert.ToInt32(attributes.ElementAt(2).Value));
 
                 List<Vector2<int>> positions = [];
-                while (reader.NodeType != XmlNodeType.EndElement)
+                foreach (var atlasPosition in elementOfType.Elements())
                 {
-                    reader.MoveToFirstAttribute();
-                    int x = Convert.ToInt32(reader.Value);
-                    reader.MoveToNextAttribute();
-                    int y = Convert.ToInt32(reader.Value);
-                    positions.Add(new(x, y));
-                    reader.MoveToElement();
-                    reader.Read();
-                    reader.Read();
+                    attributes = atlasPosition.Attributes();
+                    positions.Add(new(Convert.ToInt32(attributes.ElementAt(0).Value),
+                                      Convert.ToInt32(attributes.ElementAt(1).Value)));
                 }
                 List<Bitmap> bitmaps = [];
-                LoadFromAtlas("..\\..\\..\\..\\" + atlasPath, atlasSize, positions, bitmaps);
+                Vector2<int> imageSize = tag switch
+                {
+                    "arrowUpImage" or "arrowDownImage" => new(_cellSize.X, _cellSize.Y / 2),
+                    "arrowLeftImage" or "arrowRightImage" => new (_cellSize.X / 2, _cellSize.Y),
+                    _ => new(_cellSize.X, _cellSize.Y)
+                };
+                LoadFromAtlas("..\\..\\..\\..\\" + atlasPath, atlasSize, imageSize, positions, bitmaps);
                 arraysOfImages.Add(tag, bitmaps);
             }
             reader.Dispose();
@@ -113,15 +108,20 @@ namespace Match3.Core
             _rightArrowsTextures = arraysOfImages["arrowRightImage"];
         }
 
-        private void LoadFromAtlas(string atlasPath, Vector2<int> atlasSize, List<Vector2<int>> positions, List<Bitmap> images)
+        private void LoadFromAtlas(string atlasPath,
+                                   Vector2<int> atlasSize,
+                                   Vector2<int> imageSize,
+                                   List<Vector2<int>> positions,
+                                   List<Bitmap> images)
         {
             Bitmap atlas = new(atlasPath);
-            Size newAtlasSize = new(_cellSize.X * atlasSize.X, _cellSize.Y * atlasSize.X);
+
+            Size newAtlasSize = new(imageSize.X * atlasSize.X, imageSize.Y * atlasSize.Y);
             atlas = new Bitmap(atlas, newAtlasSize);
             for (int i = 0; i < positions.Count; i++)
             {
-                Point position = new(_cellSize.X * positions[i].X, _cellSize.Y * positions[i].Y);
-                Rectangle rectangle = new(position.X, position.Y, _cellSize.X, _cellSize.Y);
+                Point position = new(imageSize.X * positions[i].X, imageSize.Y * positions[i].Y);
+                Rectangle rectangle = new(position.X, position.Y, imageSize.X, imageSize.Y);
                 images.Add(atlas.Clone(rectangle, atlas.PixelFormat));
             }
         }
