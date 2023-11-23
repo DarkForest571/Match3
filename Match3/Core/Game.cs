@@ -1,4 +1,4 @@
-﻿using Match3.Core.Gems;
+﻿using Match3.Core.GameObjects;
 using Match3.Utils;
 using System.Diagnostics.Metrics;
 
@@ -8,9 +8,9 @@ namespace Match3.Core
     {
         private Map _map;
 
-        private Vector2? _selectedCell;
+        private Vector2<int>? _selectedCell;
 
-        private int _counter;
+        private int _currentFrame;
 
         public Game(int xSize, int ySize, int physicalFrames)
         {
@@ -29,14 +29,16 @@ namespace Match3.Core
                 new Gem(4, gemExpireFrames)  // Orange
             ]);
 
-            _counter = 0;
+            _currentFrame = 0;
 
             _selectedCell = null;
         }
 
         public IReadOnlyMap Map => _map;
 
-        public Vector2? SelectedCell => _selectedCell;
+        public Vector2<int>? SelectedCell => _selectedCell;
+
+        public int CurrentFrame => _currentFrame;
 
         public void Init()
         {
@@ -48,21 +50,20 @@ namespace Match3.Core
 
         public void Update()
         {
-            _map.Update(_counter++);
+            _map.Update(_currentFrame++);
         }
 
         public void SelectCell(int x, int y)
         {
-            if (_map.SwapInProgress(_counter) ||
+            if (_map.SwapInProgress(_currentFrame) ||
                 !_map.InBounds(x, y) ||
-                _map.CellAt(x, y) is null ||
-                _map.CellAt(x, y).GemIsFalling)
+                _map.CellAt(x, y).IsStatic)
             {
                 ResetCellSelection();
                 return;
             }
 
-            Vector2 newPosition = new(x, y);
+            Vector2<int> newPosition = new(x, y);
             if (_selectedCell == null)
             {
                 _selectedCell = newPosition;
@@ -71,7 +72,7 @@ namespace Match3.Core
             {
                 if (_selectedCell.Value.IsNeighbor(new(x, y)))
                 {
-                    _map.SwapGems(_selectedCell.Value, newPosition, _counter);
+                    _map.StartSwappingGems(_selectedCell.Value, newPosition, _currentFrame);
                 }
                 ResetCellSelection();
             }

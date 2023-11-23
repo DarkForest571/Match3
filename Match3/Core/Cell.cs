@@ -8,6 +8,8 @@ namespace Match3.Core
         public Vector2<float> Offset { get; }
 
         public IReadOnlyGem? Gem { get; }
+
+        public bool IsStatic { get; }
     }
 
     public class Cell : IReadOnlyCell
@@ -24,6 +26,8 @@ namespace Match3.Core
         public Vector2<float> Offset => _offset;
 
         public IReadOnlyGem? Gem => _gem;
+
+        public bool IsStatic => _gem != null && _gem.IsStatic;
 
         public void SetGem(Gem gem)
         {
