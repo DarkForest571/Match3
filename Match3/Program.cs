@@ -21,10 +21,10 @@ namespace Match3
                                         physicalFrames / 10,
                                         physicalFrames / 4,
                                         physicalFrames / 10,
-                                        secondsPerFrame);
+                                        secondsPerFrame,
+                                        10f);
 
             _game = new(8, 8, settings);
-            _game.Init();
 
             ApplicationConfiguration.Initialize();
 
@@ -33,9 +33,8 @@ namespace Match3
             timer.Interval = 1000 / physicalFrames;
             timer.Start();
 
-
-            Renderer renderer = new (_game, new(100,100), new(100,0));
-            InputHandler inputHandler = new (_game, new(100, 100), new(100, 0));
+            Renderer renderer = new (_game);
+            InputHandler inputHandler = new (_game);
 
             _mainForm = new MainForm(renderer, inputHandler);
             Application.Run(_mainForm);

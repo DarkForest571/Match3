@@ -1,4 +1,5 @@
 ﻿using Match3.Core.GameObjects;
+using Match3.Core.UI;
 using Match3.Utils;
 using System.Collections.Generic;
 using System.Drawing.Imaging;
@@ -25,12 +26,12 @@ namespace Match3.Core
         private Bitmap _gridTexture;
         private Bitmap _selectedGridTexture;
 
-        public Renderer(Game game, Vector2<int> cellSize, Vector2<int> gridOffset)
+        public Renderer(Game game)
         {
             _game = game;
 
-            _cellSize = cellSize;
-            _gridOffset = gridOffset;
+            _cellSize = new(100, 100);
+            _gridOffset = new(100, 0);
 
             _gemsTextures = [];
             _bombTextures = [];
@@ -51,11 +52,34 @@ namespace Match3.Core
         {
             if (_bufferedGraphics is null)
                 return;
+
             _bufferedGraphics.Graphics.Clear(Color.MidnightBlue);
 
-            DrawGrid();
-            DrawGems(_game.CurrentFrame);
-            DrawDestroyers();
+            UIFrame frame = _game.CurrentUIFrame;
+            if (frame.Elements is not null)
+            {
+                foreach (var element in frame.Elements)
+                {
+                    Point position = new(element.Position.X, element.Position.Y);
+                    if (element is MenuButton button)
+                        _bufferedGraphics.Graphics.DrawImage(button.Image, position);
+                    Point textPosition = new(position.X + element.Size.X / 2,
+                                             position.Y + element.Size.Y / 2);
+                    Font font = new Font(FontFamily.GenericSerif, element.TextSize);
+                    Brush brush = new SolidBrush(Color.FromArgb(255, 255, 255));
+                    StringFormat stringFormat = new StringFormat();
+                    stringFormat.Alignment = StringAlignment.Center;
+                    stringFormat.LineAlignment = StringAlignment.Center;
+                    _bufferedGraphics.Graphics.DrawString(element.Text, font, brush, textPosition, stringFormat);
+                }
+            }
+
+            if (frame.Title == "Game scene")
+            {
+                DrawGrid();
+                DrawGems(_game.CurrentFrame);
+                DrawDestroyers();
+            }
 
             _bufferedGraphics.Render();
         }

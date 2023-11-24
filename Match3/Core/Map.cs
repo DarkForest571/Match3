@@ -7,6 +7,8 @@ namespace Match3.Core
     {
         public Vector2<int> Size { get; }
 
+        public int Score { get; }
+
         public IReadOnlyGem? GemAt(Vector2<int> position);
 
         public IReadOnlyGem? GemAt(int x, int y);
@@ -20,6 +22,8 @@ namespace Match3.Core
 
     public class Map : IReadOnlyMap
     {
+        private readonly int _score;
+
         private readonly float _gravity;
 
         private readonly Vector2<int> _size;
@@ -52,6 +56,8 @@ namespace Match3.Core
             _destroyersAcceleration = settings.DestroyerAcceleration;
         }
 
+        public int Score => _score;
+
         public Map(Vector2<int> size, GameSettings settings) : this(size.X, size.Y, settings) { }
 
         public Vector2<int> Size => _size;
@@ -73,8 +79,10 @@ namespace Match3.Core
                                  second,
                                  frame);
 
-        public virtual void InitGems()
+        public virtual void InitMap()
         {
+            _gems.Clear();
+            _destroyers.Clear();
             for (int y = 0; y < _size.Y; ++y)
             {
                 for (int x = 0; x < _size.X; ++x)

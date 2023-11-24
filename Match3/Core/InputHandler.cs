@@ -1,32 +1,43 @@
-﻿using Match3.Utils;
+﻿using Match3.Core.UI;
+using Match3.Utils;
 
 namespace Match3.Core
 {
     public class InputHandler
     {
-        private readonly Game _game;
+        private Game _game;
 
         private Vector2<int> _cellSize;
         private Vector2<int> _gridOffset;
 
-        public InputHandler(Game game, Vector2<int> cellSize, Vector2<int> gridOffset)
+        public InputHandler(Game game)
         {
             _game = game;
-            _cellSize = cellSize;
-            _gridOffset = gridOffset;
+            _cellSize = new(100, 100);
+            _gridOffset = new(100, 0);
         }
 
         public void HandleMouseClick(Vector2<int> position)
         {
-            position -= _gridOffset;
-
-            if (position < Vector2<int>.Zero)
+            if (_game.IsGameScene)
             {
-                _game.ResetCellSelection();
+                position -= _gridOffset;
+
+                if (position < Vector2<int>.Zero)
+                {
+                    _game.ResetCellSelection();
+                }
+                else
+                {
+                    _game.SelectCell(new(position.X / _cellSize.X, position.Y / _cellSize.Y));
+                }
             }
             else
             {
-                _game.SelectCell(new(position.X / _cellSize.X, position.Y / _cellSize.Y));
+                UIFrame frame = _game.CurrentUIFrame;
+                UIFrame? newFrame = frame.ClickOnMenu(position);
+                if (newFrame is not null)
+                    _game.CurrentUIFrame = newFrame;
             }
         }
     }
