@@ -22,7 +22,7 @@ namespace Match3
                                         physicalFrames / 4,
                                         physicalFrames / 10,
                                         secondsPerFrame,
-                                        10f);
+                                        60f);
 
             _game = new(8, 8, settings);
 

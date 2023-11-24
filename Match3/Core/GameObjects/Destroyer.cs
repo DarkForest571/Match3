@@ -22,7 +22,7 @@ namespace Match3.Core.GameObjects
             _acceleration = Vector2<float>.FromDirection(direction) * accelerationPerFrame;
         }
 
-        public Destroyer(IReadOnlyGem parentGem,
+        public Destroyer(Gem parentGem,
                          Direction direction,
                          float accelerationPerFrame) : this(parentGem.ColorID,
                                                             direction,

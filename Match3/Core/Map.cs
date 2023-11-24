@@ -22,7 +22,7 @@ namespace Match3.Core
 
     public class Map : IReadOnlyMap
     {
-        private readonly int _score;
+        private int _score;
 
         private readonly float _gravity;
 
@@ -58,6 +58,10 @@ namespace Match3.Core
 
         public int Score => _score;
 
+        public void ResetScore()
+        {
+            _score = 0;
+        }
         public Map(Vector2<int> size, GameSettings settings) : this(size.X, size.Y, settings) { }
 
         public Vector2<int> Size => _size;
@@ -191,7 +195,7 @@ namespace Match3.Core
                 Vector2<int> position = GetMatrixPosition(destroyer.Position);
                 if (InBounds(position) &&
                     _gemMatrix[position.X, position.Y] is not null)
-                    _gemMatrix[position.X, position.Y]?.Activate(frame);
+                    _score += _gemMatrix[position.X, position.Y].Activate(frame);
             }
         }
 
@@ -211,6 +215,7 @@ namespace Match3.Core
                         ActivateArea(position - delta, position + delta, frame);
                         break;
                     case LineGem lineGem:
+                        lineGem.SetStatic();
                         if (lineGem.Type == LineGemType.Vertical || lineGem.Type == LineGemType.Both)
                         {
                             _destroyers.Add(new Destroyer(lineGem, Direction.Up, _destroyersAcceleration));
@@ -308,13 +313,13 @@ namespace Match3.Core
                         _gemMatrix[observer.X, observer.Y].IsStatic &&
                         gem.Equals(_gemMatrix[observer.X, observer.Y]))
                     {
-                        _gemMatrix[observer.X, observer.Y].Activate(frame);
+                        _score += _gemMatrix[observer.X, observer.Y].Activate(frame);
                     }
                     else
                         break;
                 }
             }
-            _gemMatrix[x, y].Activate(frame, CalcBonus(gem, rowSize));
+            _score += _gemMatrix[x, y].Activate(frame, CalcBonus(_gemMatrix[x, y], rowSize));
         }
 
         private void ActivateArea(Vector2<int> upperLeft, Vector2<int> bottomRight, int frame)
@@ -327,14 +332,14 @@ namespace Match3.Core
                 for (int x = upperLeft.X; x <= bottomRight.X; ++x)
                 {
                     if (InBounds(x, y) && _gemMatrix[x, y] is not null)
-                        _gemMatrix[x, y].Activate(frame);
+                        _score += _gemMatrix[x, y].Activate(frame);
                 }
             }
         }
 
         #endregion
 
-        private Gem? CalcBonus(IReadOnlyGem gem, Vector2<int> rowSize)
+        private Gem? CalcBonus(Gem gem, Vector2<int> rowSize)
         {
             if (rowSize.X == 5 || rowSize.Y == 5 ||
                 (rowSize.X >= 3 && rowSize.Y >= 3))

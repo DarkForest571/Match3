@@ -25,14 +25,14 @@
       <lineGem X = "2" Y = "2"/>
       <lineGem X = "1" Y = "6"/>
       <lineGem X = "3" Y = "6"/>
-      <lineGem X = "0" Y = "4"/>
+      <lineGem X = "1" Y = "4"/>
       <lineGem X = "3" Y = "4"/>
     </arrowUpImage>
     <arrowDownImage path = "img\\sprite_arrow_atlas.png" XStlasSize ="4" YAtlasSize ="8">
       <lineGem X = "2" Y = "3"/>
       <lineGem X = "1" Y = "7"/>
       <lineGem X = "3" Y = "7"/>
-      <lineGem X = "0" Y = "5"/>
+      <lineGem X = "1" Y = "5"/>
       <lineGem X = "3" Y = "5"/>
     </arrowDownImage>
     <arrowLeftImage path = "img\\sprite_arrow_atlas.png" XStlasSize ="8" YAtlasSize ="4">

@@ -25,6 +25,8 @@ namespace Match3.Core
 
     public class Game
     {
+        private GameSettings _settings;
+
         private readonly Map _map;
 
         private Vector2<int>? _selectedCell;
@@ -41,14 +43,15 @@ namespace Match3.Core
 
         public Game(int xSize, int ySize, GameSettings settings)
         {
+            _settings = settings;
             _map = new Map(xSize, ySize, settings);
 
             _map.SetListOfGems([
-                new Gem(0, settings.GemExpireFrames), // Red
-                new Gem(1, settings.GemExpireFrames), // Green
-                new Gem(2, settings.GemExpireFrames), // Blue
-                new Gem(3, settings.GemExpireFrames), // Yellow
-                new Gem(4, settings.GemExpireFrames)  // Orange
+                new Gem(0, settings.GemExpireFrames, 10), // Red
+                new Gem(1, settings.GemExpireFrames, 10), // Green
+                new Gem(2, settings.GemExpireFrames, 10), // Blue
+                new Gem(3, settings.GemExpireFrames, 10), // Yellow
+                new Gem(4, settings.GemExpireFrames, 10)  // Orange
             ]);
 
             _currentFrame = 0;
@@ -62,9 +65,13 @@ namespace Match3.Core
             _scoreMenu = new("Scone");
             Vector2<int> position = new(500 - buttonImage.Size.Width / 2, 400 - buttonImage.Size.Height / 2);
             Vector2<int> size = new(buttonImage.Size.Width, buttonImage.Size.Height);
+
             MenuButton playButton = new(_gameScene, buttonImage, "Play", 100, position, size);
             _mainMenu.SetElements([playButton]);
-            MenuButton quitButton = new(_mainMenu, buttonImage, "Quit", 100, position, size);
+            UIElement scoreInGame = new("test", 25, new(0, 0), new(100,100));
+            UIElement timeInGame = new("test", 25, new(900, 0), new(100,100));
+            _gameScene.SetElements([scoreInGame, timeInGame]);
+            MenuButton quitButton = new(_mainMenu, buttonImage, "Ok", 100, position, size);
             UIElement finalScore = new("test", 100, new(position.X, position.Y - size.Y), size);
             _scoreMenu.SetElements([finalScore, quitButton]);
             _currentUIFrame = _mainMenu;
@@ -87,6 +94,7 @@ namespace Match3.Core
                 {
                     _timer.StartTimer(_currentFrame);
                     _map.InitMap();
+                    _map.ResetScore();
                     _currentUIFrame = value;
                 }
                 if (value == _scoreMenu)
@@ -113,6 +121,9 @@ namespace Match3.Core
             if (_timer.IsActivated(_currentFrame) && IsGameScene)
             {
                 _map.Update(_currentFrame);
+                _gameScene.Elements.ElementAt(0).Text = "Score\n" + _map.Score;
+                float secondsLeft = (int)((1 - _timer.Normalized(_currentFrame)) * _settings.RoundDuration);
+                _gameScene.Elements.ElementAt(1).Text = "Time\n" + secondsLeft;
                 if (_timer.IsExpired(_currentFrame))
                     CurrentUIFrame = _scoreMenu;
             }
